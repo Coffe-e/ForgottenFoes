@@ -1,0 +1,4 @@
+D:\All Coding Stuff\RoR2 Modding\MoreEnemies\obj\Debug\netstandard2.0\MoreEnemies.csprojAssemblyReference.cache
+D:\All Coding Stuff\RoR2 Modding\MoreEnemies\obj\Debug\netstandard2.0\MoreEnemies.AssemblyInfoInputs.cache
+D:\All Coding Stuff\RoR2 Modding\MoreEnemies\obj\Debug\netstandard2.0\MoreEnemies.AssemblyInfo.cs
+D:\All Coding Stuff\RoR2 Modding\MoreEnemies\obj\Debug\netstandard2.0\MoreEnemies.csproj.CoreCompileInputs.cache

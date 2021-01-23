@@ -1,6 +1,6 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
-using MoreEnemies.Utils;
+using MoreMonsters.Utils;
 using R2API;
 using R2API.Utils;
 using RoR2;
@@ -15,7 +15,7 @@ using static TILER2.MiscUtil;
 using Path = System.IO.Path;
 
 
-namespace MoreEnemies
+namespace MoreMonsters
 {
     [BepInPlugin(ModGuid, ModName, ModVer)]
     [BepInDependency(R2API.R2API.PluginGUID, R2API.R2API.PluginVersion)]
@@ -30,11 +30,11 @@ namespace MoreEnemies
                 "0." +
 #endif
             "1.0.0";
-        public const string ModName = "MoreEnemies";
-        public const string ModGuid = "com.MoreEnemies";
+        public const string ModName = "MoreMonsters";
+        public const string ModGuid = "com.MoreMonsters";
 
         private static ConfigFile cfgFile;
-        internal static FilingDictionary<EnemyBoilerplate> masterEnemyList = new FilingDictionary<EnemyBoilerplate>();
+        internal static FilingDictionary<MonsterBoilerplate> masterMonsterList = new FilingDictionary<MonsterBoilerplate>();
         internal static BepInEx.Logging.ManualLogSource _logger;
 
         private void Awake()
@@ -43,16 +43,16 @@ namespace MoreEnemies
 
             //Assets.PopulateAssets(); This does not need to be used until we actually make an assetbundle
 
-            _logger.LogDebug("Adding Enemies...");
-            masterEnemyList = T2Module.InitAll<EnemyBoilerplate>(new T2Module.ModInfo
+            _logger.LogDebug("Adding Monsters...");
+            masterMonsterList = T2Module.InitAll<MonsterBoilerplate>(new T2Module.ModInfo
             {
-                displayName = "More Enemies",
-                longIdentifier = "MoreEnemies",
+                displayName = "More Monsters",
+                longIdentifier = "MoreMonsters",
                 shortIdentifier = "ME",
                 mainConfigFile = cfgFile
             });
-            T2Module.SetupAll_PluginAwake(masterEnemyList);
-            _logger.LogDebug("Adding Enemies Complete.");
+            T2Module.SetupAll_PluginAwake(masterMonsterList);
+            _logger.LogDebug("Adding Monsters Complete.");
 
 
         }
@@ -66,10 +66,10 @@ namespace MoreEnemies
 
         public static IResourceProvider PopulateAssets()
         {
-            using (var assetStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("MoreEnemies.moreenemies_assets"))
+            using (var assetStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("MoreMonsters.moreenemies_assets"))
             {
                 mainAssetBundle = AssetBundle.LoadFromStream(assetStream);
-                Provider = new AssetBundleResourcesProvider("@MoreEnemies", mainAssetBundle);
+                Provider = new AssetBundleResourcesProvider("@MoreMonsters", mainAssetBundle);
             }
             return Provider;
         }

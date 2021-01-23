@@ -8,65 +8,70 @@ using RoR2;
 using RoR2.Navigation;
 using R2API;
 
-namespace MoreEnemies.Utils
+namespace MoreMonsters.Utils
 {
-    /*public abstract class EnemyBoilerPlate<T> : EnemyBoilerplate where T : EnemyBoilerplate<T>
+    /*public abstract class MonsterBoilerPlate<T> : MonsterBoilerplate where T : MonsterBoilerplate<T>
     {
         public static T instance { get; private set; }
 
-        public EnemyBoilerPlate()
+        public MonsterBoilerPlate()
         {
             if (instance != null) throw new InvalidOperationException("Singleton class \"" + typeof(T).Name + "\" inheriting ItemBoilerplate/Item was instantiated twice");
             instance = this as T;
         }
     }*/
 
-    public abstract class EnemyBoilerplate : T2Module
+    public abstract class MonsterBoilerplate : T2Module
     {
         public string nameToken { get; private protected set; }
         public string loreToken { get; private protected set; }
 
-        /// <summary>Used by TILER2 to request language token value updates (object name). If langID is null, the request is for the invariant token</summary>
+        /// <summary>Used by TILER2 to request language token value updates (object name). If langID is null, the request is for the invariant token.</summary>
         protected string GetNameString(string langID = null)
         {
             return displayName;
         }
 
-        /// <summary>Used by TILER2 to request language token value updates (lore text, where applicable). If langID is null, the request is for the invariant token</summary>
+        /// <summary>Used by TILER2 to request language token value updates (lore text, where applicable). If langID is null, the request is for the invariant token.</summary>
         protected abstract string GetLoreString(string langID = null);
 
-
-        ///<summary>The object's display name in the mod's default language. Will be used in config files; should also be used in generic language tokens</summary>
+        ///<summary>The object's display name in the mod's default language. Will be used in config files; should also be used in generic language tokens.</summary>
         public abstract string displayName { get; }
 
-        /// <summary>Stores the body prefab that will be used for the enemy</summary>
+        ///<summary>The name of the model in the AssetBundle.</summary>
+        public abstract string modelName { get; }
+
+        /// <summary>Stores the body prefab that will be used for the monster.</summary>
         public abstract GameObject bodyPrefab { get; }
 
-        ///<summary>How big the enemy is</summary>
+        ///<summary>How big the monster is.</summary>
         public abstract HullClassification hullSize { get; }
 
-        ///<summary>How does the enemy move around</summary>
+        ///<summary>How the monster moves around.</summary>
         public abstract MapNodeGroup.GraphType graphType { get; }
 
-        ///<summary>How many Director Credits does it cost to spawn this enemy in</summary>
+        ///<summary>How many Director Credits it costs to spawn this monster in.</summary>
         public abstract int creditCost { get; }
 
-        ///<summary>Should the enemy occupy its position</summary>
+        ///<summary>Whether the monster should occupy its position.</summary>
         public abstract bool occupyPosition { get; }
 
-        ///<summary>How likely is this enemy to spawn</summary>
+        ///<summary>How likely the monster is to spawn.</summary>
         public abstract int selectionWeight { get; }
 
-        ///<summary>How far away should this enemy spawn</summary>
+        ///<summary>How far away should this monster spawn.</summary>
         public abstract DirectorCore.MonsterSpawnDistance spawnDistance { get; }
 
-        ///<summary>Can the enemy ambush the player</summary>
+        ///<summary>Can the monster ambush the player.</summary>
         public abstract bool ambush { get; }
 
-        ///<summary>the index of the stage the enemy should begin spawning at</summary>
+        ///<summary>The index of the stage the monster should begin spawning at. This should usually be set to 5.</summary>
         public abstract int minimumStage { get; }
 
-        ///<summary>What Category of monster the enemy is</summary>
+        ///<summary>What stages should the monster spawn on normally. Create empty array if the monster should spawn on all stages.</summary>
+        public abstract DirectorAPI.Stage[] homeStages { get; }
+
+        ///<summary>What category of monster the monster is.</summary>
         public abstract DirectorAPI.MonsterCategory monsterCategory { get; }
 
         public SpawnCard spawnCard { get; private set; }
@@ -76,20 +81,20 @@ namespace MoreEnemies.Utils
 
 
 
-        /// <summary>Destroys the Old model's stuff and replaces it with the one used in its place</summary>
+
+        /// <summary>Creates the prefab for the monster.</summary>
+        public abstract GameObject CreatePrefab();
+
+        /// <summary>Replaces the old model with a new one.</summary>
         public virtual GameObject CreateModel(GameObject main)
         {
             UnityEngine.Object.Destroy(main.transform.Find("ModelBase").gameObject);
             UnityEngine.Object.Destroy(main.transform.Find("CameraPivot").gameObject);
             UnityEngine.Object.Destroy(main.transform.Find("AimOrigin").gameObject);
 
-            GameObject model = Assets.mainAssetBundle.LoadAsset<GameObject>("mdlExampleSurvivor"); //Change this to the enemy's model
-
+            GameObject model = Assets.mainAssetBundle.LoadAsset<GameObject>(modelName); //Change this to the monster's model
             return model;
         }
-
-        /// <summary>Creates the prefab for the enemy.</summary>
-        public abstract void CreatePrefab();
 
         /// <summary>Registers entity states, like skills.</summary>
         public abstract void RegisterStates();
@@ -101,18 +106,19 @@ namespace MoreEnemies.Utils
         {
             base.SetupConfig();
 
-            ConfigEntryChanged += (sender, args) => {
+            ConfigEntryChanged += (sender, args) =>
+            {
                 if (args.target.boundProperty.Name == nameof(enabled))
                 {
                     if (args.oldValue != args.newValue)
                     {
                         if ((bool)args.newValue == true)
                         {
-                            if (Run.instance != null && Run.instance.enabled) Chat.AddMessage($"<color=#{ColorCatalog.GetColorHexString(ColorCatalog.ColorIndex.Blood)}>{displayName}</color> has been <color=#aaffaa>ENABLED</color>. It will now drop, and existing copies will start working again.");
+                            if (Run.instance != null && Run.instance.enabled) Chat.AddMessage($"<color=#{ColorCatalog.GetColorHexString(ColorCatalog.ColorIndex.Blood)}>{displayName}</color> has been <color=#aaffaa>ENABLED</color>. It will now spawn, and existing copies will start working again.");
                         }
                         else
                         {
-                            if (Run.instance != null && Run.instance.enabled) Chat.AddMessage($"<color=#{ColorCatalog.GetColorHexString(ColorCatalog.ColorIndex.Blood)}>{displayName}</color> has been <color=#ffaaaa>DISABLED</color>. It will no longer drop, and existing copies will stop working.");
+                            if (Run.instance != null && Run.instance.enabled) Chat.AddMessage($"<color=#{ColorCatalog.GetColorHexString(ColorCatalog.ColorIndex.Blood)}>{displayName}</color> has been <color=#ffaaaa>DISABLED</color>. It will no longer spawn, and existing copies will stop working.");
                         }
                     }
                 }
@@ -131,6 +137,12 @@ namespace MoreEnemies.Utils
             base.SetupAttributes();
             nameToken = $"{modInfo.longIdentifier}_{name.ToUpper()}_NAME";
             loreToken = $"{modInfo.longIdentifier}_{name.ToUpper()}_LORE";
+
+            //adds the bodyPrefab to the entry list
+            BodyCatalog.getAdditionalEntries += delegate (List<GameObject> list)
+            {
+                list.Add(bodyPrefab);
+            };
 
             spawnCard = new SpawnCard
             {
@@ -153,7 +165,14 @@ namespace MoreEnemies.Utils
                 requiredUnlockable = null,
                 forbiddenUnlockable = null
             };
-            DirectorAPI.Helpers.AddNewMonster(directorCard, monsterCategory);
+
+            //If the monster has home stages, add them to those stages only. Else, add it to all stages.
+            if (homeStages.Length > 0)
+                foreach (DirectorAPI.Stage stage in homeStages)
+                    DirectorAPI.Helpers.AddNewMonsterToStage(directorCard, monsterCategory, stage);
+            else
+                DirectorAPI.Helpers.AddNewMonster(directorCard, monsterCategory);
+
         }
 
 

@@ -1,0 +1,22 @@
+{
+    "ManifestVersion": "2",
+    "AuthorName": "TEA & Kevin from HP Customer Service",
+    "Name": "MoreMonsters",
+    "DisplayName": "MoreMonsters",
+    "Version": "0.1.0.0",
+    "License": "GPL-3.0 License",
+    "WebsiteURL": "https://github.com/Coffe-e/MoreEnemies",
+    "description": "",
+    "GameVersion": "1.0.3.1",
+    "Dependencies": [
+        "bbepis-BepInExPack-5.3.1",
+        "tristanmcpherson-R2API-2.5.14",
+        "ThinkInvis-TILER2-3.0.4"
+    ],
+    "NetworkMode": "both",
+    "PackageType": "mod",
+    "InstallMode": "managed",
+    "Loaders": [
+        "bepinex"
+    ]
+}

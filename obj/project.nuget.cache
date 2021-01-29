@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "EgwvSAuhiocV+Nk7rtfnDK86ZmFezuFs20F5KJ4Bh13V61A4rKA/D6grc+nQVCK91R0MMwm2u+CD4NGdHrHbeg==",
+  "dgSpecHash": "7GfE8TVZOnZhELdM0gPoGu5akfCz4fdMWwkkLuUO42hw+j+KMkIR+ftqC3xXYwg+BT7Tc4lrLMNMOmDVuyx14g==",
   "success": true,
-  "projectFilePath": "D:\\All Coding Stuff\\RoR2 Modding\\MoreEnemies\\MoreEnemies.csproj",
+  "projectFilePath": "D:\\All Coding Stuff\\RoR2 Modding\\MoreEnemies\\MoreMonsters.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\arant\\.nuget\\packages\\microsoft.netcore.platforms\\1.1.0\\microsoft.netcore.platforms.1.1.0.nupkg.sha512",
     "C:\\Users\\arant\\.nuget\\packages\\netstandard.library\\2.0.3\\netstandard.library.2.0.3.nupkg.sha512"

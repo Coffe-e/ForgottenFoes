@@ -185,9 +185,9 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\All Coding Stuff\\RoR2 Modding\\MoreEnemies\\MoreEnemies.csproj",
+      "projectUniqueName": "D:\\All Coding Stuff\\RoR2 Modding\\MoreEnemies\\MoreMonsters.csproj",
       "projectName": "MoreMonsters",
-      "projectPath": "D:\\All Coding Stuff\\RoR2 Modding\\MoreEnemies\\MoreEnemies.csproj",
+      "projectPath": "D:\\All Coding Stuff\\RoR2 Modding\\MoreEnemies\\MoreMonsters.csproj",
       "packagesPath": "C:\\Users\\arant\\.nuget\\packages\\",
       "outputPath": "D:\\All Coding Stuff\\RoR2 Modding\\MoreEnemies\\obj\\",
       "projectStyle": "PackageReference",

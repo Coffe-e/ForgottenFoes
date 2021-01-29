@@ -1,0 +1,57 @@
+[WARNING]
+
+[The earth rumbles and groans with mysterious energies...]
+Stone Roller - Rolls at enemies
+Stone Golem - Vanilla
+Stone Titan - Vanilla
+
+[The air crackles and arcs...]
+Jellyfish - Vanilla
+Spotted Jellyfish - Grabs a nearby enemy and shocks them repeatedly
+Wandering Vagrant - Vanilla
+
+[A tear in the fabric of the universe...]
+Imp - Vanilla
+Imp Sorcerer - Throws cluster-bleed thorns.
+Imp Overlord - Vanilla
+
+[The ground's temperature begins to rise...]
+Lemurian - Vanilla
+Elder Lemurian - Vanilla
+Lemurian Queen - Wields a sickle for long-range attacks, and can go underground/make fire pillars
+
+[The earth shifts and changes...]
+Infant - Half-Passive. Get to close and they attack you. Attack them, they run and call a parent if you don't kill them.
+Parent - Vanilla
+Grandparent - Vanilla (CU March)
+
+[The ground grows sickly...]
+Dwarf Mushrum - Rob
+Mini Mushrum - Vanilla
+Mega Mushrum - MASSIVE stationary enemy that raises 4 poison areas until killed
+
+[The sound of tolling bells reverbs across the land...] (Bell Family Event
+Brass Gadgets - Has a constantly rotating brass spikeball that deals damage to nearby enemies.
+Brass Contraptions - Vanilla
+Brass Tolling Bell- Has 3 varied orbs it uses to throw or manipulate the battlefield. Can combine into a bigger orb
+
+[An army gathers it's units...] (Clay-Men Family)
+Clay Men - Moffein
+Clay Templar - Vanilla
+Clay Pirate - Wields a long spear that they use to poke at you, and an arm-cannon that's used for blast attacks/projectiles
+
+[Decorations leap to life...] (Dunestrider Family)
+Clay Vase - runs and dropkicks the player
+Clay Planeswalker - Shoots a homing tar sticky-bomb that detonates if they can't get it to take enough damage
+Clay Dunestrider - Vanilla
+
+[Metals start to gleam...] (Alloy Family)
+Alloy Spider - Mech spider from 1
+Alloy Vulture - Vanilla
+Solus Control Unit - Vanilla
+
+[The wildlife graze...] (Animal Family)
+Hermit Crab - Vanilla
+Bighorn Bison - Vanilla
+Hearder - Pale one?
+

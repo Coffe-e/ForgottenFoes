@@ -23,6 +23,7 @@ namespace MoreMonsters
 {
     [BepInPlugin(ModGuid, ModName, ModVer)]
     [BepInDependency(R2API.R2API.PluginGUID, R2API.R2API.PluginVersion)]
+    [BepInDependency(TILER2Plugin.ModGuid, "3.0.4")]
     [BepInDependency("com.funkfrog_sipondo.sharesuite", BepInDependency.DependencyFlags.SoftDependency)]
     [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.EveryoneNeedSameModVersion)]
     [R2APISubmoduleDependency(nameof(ItemAPI), nameof(LanguageAPI), nameof(ResourcesAPI), nameof(PlayerAPI), nameof(PrefabAPI), nameof(BuffAPI), nameof(LoadoutAPI))]
@@ -47,23 +48,29 @@ namespace MoreMonsters
 
             //Assets.PopulateAssets(); This does not need to be used until we actually make an assetbundle
 
+            cfgFile = new ConfigFile(Path.Combine(Paths.ConfigPath, ModGuid + ".cfg"), true);
+
             _logger.LogDebug("Adding Monsters...");
             masterMonsterList = T2Module.InitAll<MonsterBoilerplate>(new T2Module.ModInfo
             {
-                displayName = "More Monsters",
+                displayName = "MoreMonsters",
                 longIdentifier = "MoreMonsters",
                 shortIdentifier = "ME",
                 mainConfigFile = cfgFile
             });
             T2Module.SetupAll_PluginAwake(masterMonsterList);
             _logger.LogDebug("Adding Monsters Complete.");
-
-
         }
+
+        private void Start()
+        {
+            T2Module.SetupAll_PluginStart(masterMonsterList);
+        }
+
 
     }
 
-    public static class Assets
+    /*public static class Assets
     {
         public static AssetBundle mainAssetBundle = null;
         public static AssetBundleResourcesProvider Provider;
@@ -78,6 +85,6 @@ namespace MoreMonsters
             return Provider;
         }
 
-    }
+    }*/
 }
 

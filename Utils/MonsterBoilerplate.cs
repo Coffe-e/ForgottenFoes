@@ -95,7 +95,7 @@ namespace MoreMonsters.Utils
             UnityEngine.Object.Destroy(main.transform.Find("CameraPivot").gameObject);
             UnityEngine.Object.Destroy(main.transform.Find("AimOrigin").gameObject);
 
-            GameObject model = Assets.mainAssetBundle.LoadAsset<GameObject>("mdl" + nameTag); //Change this to the monster's model
+            GameObject model = null; //Assets.mainAssetBundle.LoadAsset<GameObject>("mdl" + nameTag); //Change this to the monster's model
             return model;
         }
 
@@ -184,9 +184,6 @@ namespace MoreMonsters.Utils
                     DirectorAPI.Helpers.AddNewMonsterToStage(directorCard, monsterCategory, stage);
             else
                 DirectorAPI.Helpers.AddNewMonster(directorCard, monsterCategory);
-
         }
-
-
     }
 }

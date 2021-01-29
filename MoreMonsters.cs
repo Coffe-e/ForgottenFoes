@@ -14,7 +14,11 @@ using UnityEngine;
 using static TILER2.MiscUtil;
 using Path = System.IO.Path;
 
-
+/* TO DO:
+ * Add Logbook support
+ * Flesh out config options for the boilerplate
+ * Fuck with entity states
+ */
 namespace MoreMonsters
 {
     [BepInPlugin(ModGuid, ModName, ModVer)]
@@ -23,7 +27,7 @@ namespace MoreMonsters
     [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.EveryoneNeedSameModVersion)]
     [R2APISubmoduleDependency(nameof(ItemAPI), nameof(LanguageAPI), nameof(ResourcesAPI), nameof(PlayerAPI), nameof(PrefabAPI), nameof(BuffAPI), nameof(LoadoutAPI))]
 
-    public class KevinsAdditionsPlugin : BaseUnityPlugin
+    public class MoreMonsters : BaseUnityPlugin
     {
         public const string ModVer =
 #if DEBUG

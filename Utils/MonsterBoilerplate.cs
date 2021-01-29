@@ -24,7 +24,9 @@ namespace MoreMonsters.Utils
     public abstract class MonsterBoilerplate : T2Module
     {
         public string nameToken { get; private protected set; }
-        public string loreToken { get; private protected set; }
+        public string loreToken { get; private protected set; } 
+        public SpawnCard spawnCard { get; private set; }
+        public DirectorCard directorCard { get; private set; }
 
         /// <summary>Used by TILER2 to request language token value updates (object name). If langID is null, the request is for the invariant token.</summary>
         protected string GetNameString(string langID = null)
@@ -38,10 +40,10 @@ namespace MoreMonsters.Utils
         ///<summary>The object's display name in the mod's default language. Will be used in config files; should also be used in generic language tokens.</summary>
         public abstract string displayName { get; }
 
-        ///<summary>The name of the model in the AssetBundle.</summary>
-        public abstract string modelName { get; }
+        ///<summary>The standard named used in files without any prefixes.</summary>
+        public abstract string nameTag { get; }
 
-        /// <summary>Stores the body prefab that will be used for the monster.</summary>
+        /// <summary>Stores the body prefab that will be used for the monster. Should be declared with PrefabAPI.InstantiateClone().</summary>
         public abstract GameObject bodyPrefab { get; }
 
         ///<summary>How big the monster is.</summary>
@@ -74,8 +76,9 @@ namespace MoreMonsters.Utils
         ///<summary>What category of monster the monster is.</summary>
         public abstract DirectorAPI.MonsterCategory monsterCategory { get; }
 
-        public SpawnCard spawnCard { get; private set; }
-        public DirectorCard directorCard { get; private set; }
+        ///<summary>Whether the monster can spawn as a boss (e.g. Elder Lemurians can spawn as bosses).</summary>
+        public abstract bool canBeBoss { get; }
+
 
 
 
@@ -83,7 +86,7 @@ namespace MoreMonsters.Utils
 
 
         /// <summary>Creates the prefab for the monster.</summary>
-        public abstract GameObject CreatePrefab();
+        public abstract void CreatePrefab();
 
         /// <summary>Replaces the old model with a new one.</summary>
         public virtual GameObject CreateModel(GameObject main)
@@ -92,13 +95,15 @@ namespace MoreMonsters.Utils
             UnityEngine.Object.Destroy(main.transform.Find("CameraPivot").gameObject);
             UnityEngine.Object.Destroy(main.transform.Find("AimOrigin").gameObject);
 
-            GameObject model = Assets.mainAssetBundle.LoadAsset<GameObject>(modelName); //Change this to the monster's model
+            GameObject model = Assets.mainAssetBundle.LoadAsset<GameObject>("mdl" + nameTag); //Change this to the monster's model
             return model;
         }
 
+        /// <summary>Adds skills to a bodyPrefab. Should normally be called by CreatePrefab()</summary>
+        public abstract void SkillSetup();
+
         /// <summary>Registers entity states, like skills.</summary>
         public abstract void RegisterStates();
-
 
         //public RoR2.UI.LogBook.Entry logbookEntry { get; internal set; }
 
@@ -138,23 +143,30 @@ namespace MoreMonsters.Utils
             nameToken = $"{modInfo.longIdentifier}_{name.ToUpper()}_NAME";
             loreToken = $"{modInfo.longIdentifier}_{name.ToUpper()}_LORE";
 
+            CreatePrefab();
+            SkillSetup();
+            RegisterStates();
             //adds the bodyPrefab to the entry list
             BodyCatalog.getAdditionalEntries += delegate (List<GameObject> list)
             {
                 list.Add(bodyPrefab);
             };
+            RegisterStates();
 
-            spawnCard = new SpawnCard
-            {
-                prefab = bodyPrefab,
-                sendOverNetwork = true,
-                hullSize = hullSize,
-                nodeGraphType = graphType,
-                requiredFlags = NodeFlags.None,
-                forbiddenFlags = NodeFlags.None,
-                directorCreditCost = creditCost,
-                occupyPosition = occupyPosition
-            };
+            //Makes a SpawnCard for the enemy
+            CharacterSpawnCard spawnCard1 = ScriptableObject.CreateInstance<CharacterSpawnCard>();
+            spawnCard1.name = "csc" + nameTag;
+            spawnCard1.prefab = bodyPrefab;
+            spawnCard1.sendOverNetwork = true;
+            spawnCard1.hullSize = hullSize;
+            spawnCard1.nodeGraphType = graphType;
+            spawnCard1.requiredFlags = NodeFlags.None;
+            spawnCard1.forbiddenFlags = NodeFlags.None;
+            spawnCard1.directorCreditCost = creditCost;
+            spawnCard1.occupyPosition = true;
+            spawnCard1.loadout = new SerializableLoadout();
+            spawnCard1.noElites = false;
+            spawnCard1.forbiddenAsBoss = canBeBoss;
             directorCard = new DirectorCard
             {
                 spawnCard = spawnCard,

@@ -2,6 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>MoreMonsters</AssemblyName>
+    <RootNamespace>MoreMonsters</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -38,6 +40,9 @@
     <Reference Include="UnityEngine">
       <HintPath>lib\UnityEngine.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEngine.AnimationModule">
+      <HintPath>lib\UnityEngine.AnimationModule.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.AssetBundleModule">
       <HintPath>lib\UnityEngine.AssetBundleModule.dll</HintPath>
     </Reference>
@@ -57,5 +62,9 @@
       <HintPath>lib\UnityEngine.UI.dll</HintPath>
     </Reference>
   </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="xcopy &quot;$(TargetPath)&quot; &quot;$(ProjectDir)NetworkWeaver\Patched\&quot; /Y&#xD;&#xA;cd &quot;$(ProjectDir)NetworkWeaver&quot;&#xD;&#xA;Unity.UNetWeaver.exe &quot;..\lib\UnityEngine.CoreModule.dll&quot; &quot;..\lib\UnityEngine.Networking.dll&quot; &quot;\Patched&quot; &quot;$(TargetFileName)&quot; &quot;$(ProjectDir)lib&quot;&#xD;&#xA;&#xD;&#xA;del &quot;$(ProjectDir)NetworkWeaver\Patched\$(TargetFileName)&quot; /q" />
+  </Target>
 
 </Project>

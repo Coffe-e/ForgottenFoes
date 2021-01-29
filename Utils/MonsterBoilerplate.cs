@@ -24,7 +24,7 @@ namespace MoreMonsters.Utils
     public abstract class MonsterBoilerplate : T2Module
     {
         public string nameToken { get; private protected set; }
-        public string loreToken { get; private protected set; } 
+        public string loreToken { get; private protected set; }
         public SpawnCard spawnCard { get; private set; }
         public DirectorCard directorCard { get; private set; }
 
@@ -44,7 +44,10 @@ namespace MoreMonsters.Utils
         public abstract string nameTag { get; }
 
         /// <summary>Stores the body prefab that will be used for the monster. Should be declared with PrefabAPI.InstantiateClone().</summary>
-        public abstract GameObject bodyPrefab { get; }
+        public GameObject bodyPrefab;
+
+        ///<summary>Stores the CharacterMaster prefab for use by AI.</summary>
+        public GameObject masterPrefab;
 
         ///<summary>How big the monster is.</summary>
         public abstract HullClassification hullSize { get; }
@@ -85,10 +88,10 @@ namespace MoreMonsters.Utils
 
 
 
-        /// <summary>Creates the prefab for the monster.</summary>
+        ///<summary>Creates the prefab for the monster.</summary>
         public abstract void CreatePrefab();
 
-        /// <summary>Replaces the old model with a new one.</summary>
+        ///<summary>Replaces the old model with a new one.</summary>
         public virtual GameObject CreateModel(GameObject main)
         {
             UnityEngine.Object.Destroy(main.transform.Find("ModelBase").gameObject);
@@ -99,13 +102,14 @@ namespace MoreMonsters.Utils
             return model;
         }
 
-        /// <summary>Adds skills to a bodyPrefab. Should normally be called by CreatePrefab()</summary>
+        ///<summary>Adds skills to a bodyPrefab. Should normally be called by CreatePrefab()</summary>
         public abstract void SkillSetup();
 
-        /// <summary>Registers entity states, like skills.</summary>
+        ///<summary>Registers entity states, like skills.</summary>
         public abstract void RegisterStates();
 
-        //public RoR2.UI.LogBook.Entry logbookEntry { get; internal set; }
+        ///<summary>Adds a charactermaster for AI purposes</summary>
+        public abstract void CreateMaster();
 
         public override void SetupConfig()
         {
@@ -146,12 +150,17 @@ namespace MoreMonsters.Utils
             CreatePrefab();
             SkillSetup();
             RegisterStates();
-            //adds the bodyPrefab to the entry list
+            CreateMaster();
+
+            //adds the bodyPrefab and masterPrefab to the entry list
             BodyCatalog.getAdditionalEntries += delegate (List<GameObject> list)
             {
                 list.Add(bodyPrefab);
             };
-            RegisterStates();
+            MasterCatalog.getAdditionalEntries += delegate (List<GameObject> list)
+            {
+                list.Add(masterPrefab);
+            };
 
             //Makes a SpawnCard for the enemy
             CharacterSpawnCard spawnCard1 = ScriptableObject.CreateInstance<CharacterSpawnCard>();
@@ -184,6 +193,11 @@ namespace MoreMonsters.Utils
                     DirectorAPI.Helpers.AddNewMonsterToStage(directorCard, monsterCategory, stage);
             else
                 DirectorAPI.Helpers.AddNewMonster(directorCard, monsterCategory);
+        }
+
+        public override void SetupLate()
+        {
+            base.SetupLate();
         }
     }
 }

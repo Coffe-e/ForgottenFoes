@@ -25,4 +25,3 @@ D:\All Coding Stuff\RoR2 Modding\MoreEnemies\obj\Release\netstandard2.0\MoreMons
 D:\All Coding Stuff\RoR2 Modding\MoreEnemies\obj\Release\netstandard2.0\MoreMonsters.csproj.CopyComplete
 D:\All Coding Stuff\RoR2 Modding\MoreEnemies\obj\Release\netstandard2.0\MoreMonsters.dll
 D:\All Coding Stuff\RoR2 Modding\MoreEnemies\obj\Release\netstandard2.0\MoreMonsters.pdb
-D:\All Coding Stuff\RoR2 Modding\MoreEnemies\obj\Release\netstandard2.0\MoreMonsters.csprojAssemblyReference.cache

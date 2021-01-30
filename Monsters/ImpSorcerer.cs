@@ -46,33 +46,91 @@ namespace MoreMonsters
         public override bool canBeBoss => false;
         protected override string GetLoreString(string langID = null) => "lol";
 
+        protected private SerializableEntityStateType initialStateType;
         GameObject projectilePrefab;
         GameObject spikePrefab;
+        SkillDef skillDefPrimary;
         SkillDef skillDefSecondary;
         public override void CreatePrefab()
         {
             bodyPrefab = PrefabAPI.InstantiateClone(Resources.Load<GameObject>("Prefabs/CharacterBodies/ImpBody"), "ImpSorcererBody");
-            var wispPrefab = Resources.Load<GameObject>("Prefabs/CharacterBodies/WispBody");
 
-            var entitystatemachine = bodyPrefab.GetComponents<EntityStateMachine>();
-            EntityStateMachine Fuckingshit = null;
-            foreach(EntityStateMachine stateMachine in entitystatemachine)
-            {
-                if (stateMachine.customName == "body")
-                    Fuckingshit = stateMachine;
-            }
-            var temp = Fuckingshit.initialStateType;
-            //UnityEngine.Object.Destroy(bodyPrefab.GetComponent<EntityStateMachine>());
+            var fly = bodyPrefab.AddComponent<EntityStateMachine>();
+            fly.customName = "Flight";
+            fly.initialStateType = new SerializableEntityStateType(typeof(GenericCharacterMain));
+            fly.mainStateType = new SerializableEntityStateType(typeof(GenericCharacterMain));
+            /*var wispPrefab = Resources.Load<GameObject>("Prefabs/CharacterBodies/WispBody");
 
-            var entitystatemachine1 = bodyPrefab.GetComponents<EntityStateMachine>();
-            EntityStateMachine Fuckingass = null;
-            foreach (EntityStateMachine stateMachine in entitystatemachine1)
+            //Grabs the EntityStateMachine That needs to be manipulated
+            List<EntityStateMachine> bodyEntityStateMachines = new List<EntityStateMachine>();
+            bodyPrefab.GetComponents<EntityStateMachine>(bodyEntityStateMachines);
+            if (bodyEntityStateMachines[0].customName != "Body")
+                bodyEntityStateMachines.RemoveAt(0);
+
+            //Grabs the wisp EntityStateMachine the prefab one is being replaced with
+            List<EntityStateMachine> wispEntityStateMachines = new List<EntityStateMachine>();
+            wispPrefab.GetComponents<EntityStateMachine>(wispEntityStateMachines);
+            if (wispEntityStateMachines[0].customName != "Body")
+                wispEntityStateMachines.RemoveAt(0);
+
+            bodyEntityStateMachines[0].mainStateType = wispEntityStateMachines[0].mainStateType;
+
+            _______________________________________________________________________________*/
+
+            /*bodyPrefab = PrefabAPI.InstantiateClone(Resources.Load<GameObject>("Prefabs/CharacterBodies/BellBody"), "ImpSorcererBody");
+            var impPrefab = PrefabAPI.InstantiateClone(Resources.Load<GameObject>("Prefabs/CharacterBodies/ImpBody"), "ImpSorcererImpAssets");
+
+            List<EntityStateMachine> bodyEntityStateMachines = new List<EntityStateMachine>();
+            List<EntityStateMachine> impEntityStateMachines = new List<EntityStateMachine>();
+
+            //Replaces the modelbase for the bell with the imp one and adds other imp gameobjects
+            UnityEngine.Object.Destroy(bodyPrefab.transform.Find("mdlBell").gameObject);
+            impPrefab.transform.Find("mdlImp").SetParent(bodyPrefab.transform.Find("ModelBase"));
+            impPrefab.transform.Find("CameraPivot").SetParent(bodyPrefab.transform);
+            impPrefab.transform.Find("AimOrigin").SetParent(bodyPrefab.transform);
+
+            bodyPrefab.GetComponents<EntityStateMachine>(bodyEntityStateMachines);
+            impPrefab.GetComponents<EntityStateMachine>(impEntityStateMachines);
+            if(bodyEntityStateMachines[0].customName == "Body")
             {
-                if (stateMachine.customName == "body")
-                    Fuckingass = stateMachine;
+                bodyEntityStateMachines[0].initialStateType = impEntityStateMachines[0].initialStateType;
+                bodyEntityStateMachines[1] = impEntityStateMachines[1];
             }
-            Fuckingshit = Fuckingass;
-            Fuckingshit.initialStateType = temp;
+
+            UnityEngine.Object.Destroy(bodyPrefab.GetComponent<RigidbodyDirection>());
+            UnityEngine.Object.Destroy(bodyPrefab.GetComponent<RigidbodyMotor>());
+            var cpt0 = bodyPrefab.AddComponent<CharacterDirection>();
+            var cpt1 = bodyPrefab.AddComponent<CharacterMotor>();
+            var cpt2 = bodyPrefab.AddComponent<KinematicCharacterMotor>();
+            var cpt3 = bodyPrefab.GetComponent<CharacterBody>();
+            var cpt4 = bodyPrefab.GetComponent<CharacterDeathBehavior>();
+
+            cpt0 = impPrefab.GetComponent<CharacterDirection>();
+            cpt1 = impPrefab.GetComponent<CharacterMotor>();
+            cpt1.airControl = 1;
+            cpt1.isFlying = true;
+            cpt1.characterDirection = cpt0;
+            cpt2 = impPrefab.GetComponent<KinematicCharacterMotor>();
+            cpt3 = impPrefab.GetComponent<CharacterBody>();
+            cpt1.body = cpt3;
+            cpt3.baseNameToken = "IMPSORCERER_BODY_NAME";
+            cpt4 = impPrefab.GetComponent<CharacterDeathBehavior>();*/
+
+
+            /*//Removes the BellArmature and replaces it with the Imp Armature
+            UnityEngine.Object.Destroy(bodyPrefab.transform.Find("BellArmature").gameObject);
+            impPrefab.transform.Find("ImpArmature").SetParent(bodyPrefab.transform.Find("mdlBell"));
+            //Removes the BellMesh and replaces it with the Imp Mesh
+            UnityEngine.Object.Destroy(bodyPrefab.transform.Find("BellMesh").gameObject);
+            impPrefab.transform.Find("ImpMesh").SetParent(bodyPrefab.transform.Find("mdlBell"));
+            //removes the aim assist from the bell and adds the imp one
+            UnityEngine.Object.Destroy(bodyPrefab.transform.Find("GameObject").gameObject);
+            impPrefab.transform.Find("AimAssist").SetParent(bodyPrefab.transform.Find("mdlBell"));*/
+
+
+
+
+            //var stateMachines = bodyPrefab.GetComponents<EntityStateMachine>();
 
 
 
@@ -87,7 +145,7 @@ namespace MoreMonsters
             {
                 BaseUnityPlugin.DestroyImmediate(obj);
             }
-
+            PrimarySetup();
             SecondarySetup();
         }
 
@@ -128,7 +186,75 @@ namespace MoreMonsters
             ass.shouldFireEquipment = false;
             ass.shouldTapButton = false;
 
+            AISkillDriver fly = masterPrefab.AddComponent<AISkillDriver>();
+            fly.skillSlot = SkillSlot.Primary;
+            fly.requireSkillReady = true;
+            fly.requireEquipmentReady = false;
+            fly.nextHighPriorityOverride = ass;
+            fly.requiredSkill = skillDefPrimary;
+            fly.moveTargetType = AISkillDriver.TargetType.Custom;
+            fly.minDistance = 0f;
+            fly.maxDistance = float.PositiveInfinity;
+            fly.selectionRequiresTargetLoS = false;
+            fly.activationRequiresTargetLoS = true;
+            fly.activationRequiresAimConfirmation = false;
+            fly.movementType = AISkillDriver.MovementType.StrafeMovetarget;
+            fly.aimType = AISkillDriver.AimType.None;
+            fly.ignoreNodeGraph = true;
+            fly.driverUpdateTimerOverride = 1f;
+            fly.shouldSprint = true;
+            fly.shouldFireEquipment = false;
+            fly.buttonPressType = AISkillDriver.ButtonPressType.Abstain;
         }
+
+        private void PrimarySetup()
+        {
+            SkillLocator component = bodyPrefab.GetComponent<SkillLocator>();
+
+            LanguageAPI.Add("IMPSORCERER_PRIMARY_FLY_NAME", "Fly");
+            LanguageAPI.Add("IMPSORCERER_PRIMARY_FLY_DESCRIPTION", "");
+
+            // set up your primary skill def here!
+
+            skillDefPrimary = ScriptableObject.CreateInstance<SkillDef>();
+            skillDefPrimary.activationState = new SerializableEntityStateType(typeof(Fly));
+            skillDefPrimary.activationStateMachineName = "Body";
+            skillDefPrimary.baseMaxStock = 1;
+            skillDefPrimary.baseRechargeInterval = 10f;
+            skillDefPrimary.beginSkillCooldownOnSkillEnd = true;
+            skillDefPrimary.canceledFromSprinting = false;
+            skillDefPrimary.fullRestockOnAssign = true;
+            skillDefPrimary.interruptPriority = InterruptPriority.Death;
+            skillDefPrimary.isBullets = false;
+            skillDefPrimary.isCombatSkill = true;
+            skillDefPrimary.mustKeyPress = true;
+            skillDefPrimary.noSprint = true;
+            skillDefPrimary.rechargeStock = 1;
+            skillDefPrimary.requiredStock = 1;
+            skillDefPrimary.shootDelay = 0f;
+            skillDefPrimary.stockToConsume = 1;
+            skillDefPrimary.icon = null;
+            skillDefPrimary.skillDescriptionToken = "IMPSORCERER_PRIMARY_FLY_DESCRIPTION";
+            skillDefPrimary.skillName = "IMPSORCERER_PRIMARY_FLY_NAME";
+            skillDefPrimary.skillNameToken = "IMPSORCERER_PRIMARY_FLY_NAME";
+            LoadoutAPI.AddSkillDef(skillDefPrimary);
+
+            component.primary = bodyPrefab.AddComponent<GenericSkill>();
+            SkillFamily newFamily = ScriptableObject.CreateInstance<SkillFamily>();
+            newFamily.variants = new SkillFamily.Variant[1];
+            LoadoutAPI.AddSkillFamily(newFamily);
+            component.primary.SetFieldValue("_skillFamily", newFamily);
+            SkillFamily skillFamily = component.primary.skillFamily;
+
+            skillFamily.variants[0] = new SkillFamily.Variant
+            {
+                skillDef = skillDefPrimary,
+                unlockableName = "",
+                viewableNode = new ViewablesCatalog.Node(skillDefPrimary.skillNameToken, false, null)
+            };
+
+        }
+
 
         private void SecondarySetup()
         {
@@ -178,6 +304,7 @@ namespace MoreMonsters
             };
 
         }
+
 
         private void AddProjectiles()
         {
@@ -291,15 +418,123 @@ namespace EntityStates.MoreMonsters.ImpSorcerer
         public override void FixedUpdate()
         {
             base.FixedUpdate();
-            if (base.fixedAge >= this.duration && base.isAuthority)
+            if (base.fixedAge >= duration && base.isAuthority)
             {
                 this.outer.SetNextStateToMain();
                 return;
             }
         }
+    }
+
+    public class Poop : BaseSkillState
+    {
+        public override void OnEnter()
+        {
+            base.OnEnter();
+            //animator = base.GetModelAnimator();
+            /*if (animator)
+            {
+                flyOverrideLayer = animator.GetLayerIndex("FlyOverride");
+            }*/
+            if (base.modelLocator)
+            {
+                base.modelLocator.normalizeToFloor = false;
+            }
+            //Util.PlaySound(enterSoundString, base.gameObject);
+        }
+
+        public override void Update()
+        {
+            base.Update();
+            /*if (animator)
+            {
+                animator.SetLayerWeight(flyOverrideLayer, Util.Remap(Mathf.Clamp01(base.age / mecanimTransitionDuration), 0f, 1f, 1f - flyOverrideMecanimLayerWeight, flyOverrideMecanimLayerWeight));
+            }*/
+        }
+
+        public override void OnExit()
+        {
+            if (base.characterMotor)
+            {
+                base.characterMotor.walkSpeedPenaltyCoefficient = 1f;
+            }
+            base.OnExit();
+        }
+
+        public float mecanimTransitionDuration;
+        public float flyOverrideMecanimLayerWeight;
+        public float movementSpeedMultiplier;
+        public string enterSoundString;
+        protected Animator animator;
+        protected int flyOverrideLayer;
+    }
 
 
+    public class Fly : BaseSkillState
+    {
+        public static float launchSpeed = 10f;
+        //public static GameObject jumpEffectPrefab;
+        //public static string jumpEffectMuzzleString;
+        public ICharacterGravityParameterProvider characterGravityParameterProvider;
+        public ICharacterFlightParameterProvider characterFlightParameterProvider;
+        public float mecanimTransitionDuration;
+        public float flyOverrideMecanimLayerWeight;
+        public float movementSpeedMultiplier = 1.2f;
+        public string enterSoundString;
+        protected Animator animator;
+        protected int flyOverrideLayer;
+        public override void OnEnter()
+        {
+            base.OnEnter();
+            this.animator = base.GetModelAnimator();
+            this.characterGravityParameterProvider = base.gameObject.GetComponent<ICharacterGravityParameterProvider>();
+            this.characterFlightParameterProvider = base.gameObject.GetComponent<ICharacterFlightParameterProvider>();
+            if (this.animator)
+            {
+                this.flyOverrideLayer = this.animator.GetLayerIndex("FlyOverride");
+            }
+            if (base.characterMotor)
+            {
+                base.characterMotor.walkSpeedPenaltyCoefficient = this.movementSpeedMultiplier;
+            }
+            if (base.modelLocator)
+            {
+                base.modelLocator.normalizeToFloor = false;
+            }
+            characterGravityParameterProvider = base.gameObject.GetComponent<ICharacterGravityParameterProvider>();
+            characterFlightParameterProvider = base.gameObject.GetComponent<ICharacterFlightParameterProvider>();
+            if (characterGravityParameterProvider != null)
+            {
+                CharacterGravityParameters gravityParameters = characterGravityParameterProvider.gravityParameters;
+                gravityParameters.channeledAntiGravityGranterCount++;
+                characterGravityParameterProvider.gravityParameters = gravityParameters;
+            }
+            if (characterFlightParameterProvider != null)
+            {
+                CharacterFlightParameters flightParameters = characterFlightParameterProvider.flightParameters;
+                flightParameters.channeledFlightGranterCount++;
+                characterFlightParameterProvider.flightParameters = flightParameters;
+            }
+            if (base.characterMotor)
+            {
+                base.characterMotor.velocity.y = launchSpeed;
+                base.characterMotor.Motor.ForceUnground();
+            }
+            //base.PlayAnimation("Body", "Jump");
+            /*if (jumpEffectPrefab)
+            {
+                EffectManager.SimpleMuzzleFlash(jumpEffectPrefab, base.gameObject, jumpEffectMuzzleString, false);
+            }*/
+        }
 
+        public override void OnExit()
+        {
+            if (this.activatorSkillSlot)
+            {
+                this.activatorSkillSlot.SetSkillOverride(this, Resources.Load<SkillDef>("skilldefs/captainbody/CaptainSkillUsedUp"), GenericSkill.SkillOverridePriority.Replacement);
+            }
+            base.OnExit();
+        }
     }
 
 

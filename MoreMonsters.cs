@@ -46,7 +46,7 @@ namespace MoreMonsters
         {
             _logger = Logger;
 
-            //Assets.PopulateAssets(); This does not need to be used until we actually make an assetbundle
+            Assets.PopulateAssets();
 
             cfgFile = new ConfigFile(Path.Combine(Paths.ConfigPath, ModGuid + ".cfg"), true);
 
@@ -70,7 +70,7 @@ namespace MoreMonsters
 
     }
 
-    /*public static class Assets
+    public static class Assets
     {
         public static AssetBundle mainAssetBundle = null;
         public static AssetBundleResourcesProvider Provider;
@@ -85,6 +85,6 @@ namespace MoreMonsters
             return Provider;
         }
 
-    }*/
+    }
 }
 

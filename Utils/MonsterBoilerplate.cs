@@ -10,23 +10,18 @@ using R2API;
 
 namespace MoreMonsters.Utils
 {
-    /*public abstract class MonsterBoilerPlate<T> : MonsterBoilerplate where T : MonsterBoilerplate<T>
-    {
-        public static T instance { get; private set; }
-
-        public MonsterBoilerPlate()
-        {
-            if (instance != null) throw new InvalidOperationException("Singleton class \"" + typeof(T).Name + "\" inheriting ItemBoilerplate/Item was instantiated twice");
-            instance = this as T;
-        }
-    }*/
-
     public abstract class MonsterBoilerplate : T2Module
     {
         public string nameToken { get; private protected set; }
         public string loreToken { get; private protected set; }
         public SpawnCard spawnCard { get; private set; }
         public DirectorCard directorCard { get; private set; }
+
+        /// <summary>Stores the body prefab that will be used for the monster. Should be declared with PrefabAPI.InstantiateClone().</summary>
+        public GameObject bodyPrefab;
+
+        ///<summary>Stores the CharacterMaster prefab for use by AI.</summary>
+        public GameObject masterPrefab;
 
         /// <summary>Used by TILER2 to request language token value updates (object name). If langID is null, the request is for the invariant token.</summary>
         protected string GetNameString(string langID = null)
@@ -40,14 +35,11 @@ namespace MoreMonsters.Utils
         ///<summary>The object's display name in the mod's default language. Will be used in config files; should also be used in generic language tokens.</summary>
         public abstract string displayName { get; }
 
-        ///<summary>The standard named used in files without any prefixes.</summary>
+        ///<summary>The standard named used in files without any prefixes. If the names for these files are not consistent, there may be null references.</summary>
         public abstract string nameTag { get; }
 
-        /// <summary>Stores the body prefab that will be used for the monster. Should be declared with PrefabAPI.InstantiateClone().</summary>
-        public GameObject bodyPrefab;
-
-        ///<summary>Stores the CharacterMaster prefab for use by AI.</summary>
-        public GameObject masterPrefab;
+        ///<summary>Skillstates to be registered should be here</summary>
+        public abstract Type[] skillStates { get; }
 
         ///<summary>How big the monster is.</summary>
         public abstract HullClassification hullSize { get; }
@@ -70,7 +62,7 @@ namespace MoreMonsters.Utils
         ///<summary>Can the monster ambush the player.</summary>
         public abstract bool ambush { get; }
 
-        ///<summary>The index of the stage the monster should begin spawning at. This should usually be set to 5.</summary>
+        ///<summary>The index of the stage the monster should begin spawning at. This should usually be set to 5 so they start spawning during the second loop of stages.</summary>
         public abstract int minimumStage { get; }
 
         ///<summary>What stages should the monster spawn on normally. Create empty array if the monster should spawn on all stages.</summary>
@@ -81,8 +73,6 @@ namespace MoreMonsters.Utils
 
         ///<summary>Whether the monster can spawn as a boss (e.g. Elder Lemurians can spawn as bosses).</summary>
         public abstract bool canBeBoss { get; }
-
-
 
 
 
@@ -103,12 +93,11 @@ namespace MoreMonsters.Utils
         }
 
         ///<summary>Adds skills to a bodyPrefab. Should normally be called by CreatePrefab()</summary>
-        public abstract void SkillSetup();
+        public virtual void SkillSetup()
+        {
+        }
 
         ///<summary>Registers entity states, like skills.</summary>
-        public abstract void RegisterStates();
-
-        ///<summary>Adds a charactermaster for AI purposes</summary>
         public abstract void CreateMaster();
 
         public override void SetupConfig()
@@ -144,12 +133,13 @@ namespace MoreMonsters.Utils
         public override void SetupAttributes()
         {
             base.SetupAttributes();
-            nameToken = $"{modInfo.longIdentifier}_{name.ToUpper()}_NAME";
-            loreToken = $"{modInfo.longIdentifier}_{name.ToUpper()}_LORE";
+            
+            //These current have no use, I can probably do something with them
+            /*nameToken = $"{modInfo.longIdentifier}_{name.ToUpper()}_NAME";
+            loreToken = $"{modInfo.longIdentifier}_{name.ToUpper()}_LORE";*/
 
             CreatePrefab();
             SkillSetup();
-            RegisterStates();
             CreateMaster();
 
             //adds the bodyPrefab and masterPrefab to the entry list
@@ -161,6 +151,9 @@ namespace MoreMonsters.Utils
             {
                 list.Add(masterPrefab);
             };
+            //Registers the entitystates
+            for(int i = 0; i < skillStates.Length; i++)
+                LoadoutAPI.AddSkill(skillStates[i]);
 
             //Makes a SpawnCard for the enemy
             CharacterSpawnCard spawnCard1 = ScriptableObject.CreateInstance<CharacterSpawnCard>();

@@ -1,12 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using UnityEngine;
-using static TILER2.MiscUtil;
-using TILER2;
+﻿using BepInEx;
+using R2API;
 using RoR2;
 using RoR2.Navigation;
-using R2API;
+using System;
+using System.Collections.Generic;
+using System.Text;
+using TILER2;
+using UnityEngine;
+using static TILER2.MiscUtil;
 
 namespace MoreMonsters.Utils
 {
@@ -95,7 +96,20 @@ namespace MoreMonsters.Utils
         ///<summary>Adds skills to a bodyPrefab. Should normally be called by CreatePrefab()</summary>
         public virtual void SkillSetup()
         {
+            foreach (GenericSkill obj in bodyPrefab.GetComponentsInChildren<GenericSkill>())
+                BaseUnityPlugin.DestroyImmediate(obj);
+            PrimarySetup();
+            SecondarySetup();
+            UtilitySetup();
+            SpecialSetup();
+            PassiveSetup();
         }
+
+        public virtual void PrimarySetup() { }
+        public virtual void SecondarySetup() { }
+        public virtual void UtilitySetup() { }
+        public virtual void SpecialSetup() { }
+        public virtual void PassiveSetup() { }
 
         ///<summary>Registers entity states, like skills.</summary>
         public abstract void CreateMaster();
@@ -142,7 +156,7 @@ namespace MoreMonsters.Utils
             SkillSetup();
             CreateMaster();
 
-            //adds the bodyPrefab and masterPrefab to the entry list
+            //Adds the bodyPrefab and masterPrefab to the entry list
             BodyCatalog.getAdditionalEntries += delegate (List<GameObject> list)
             {
                 list.Add(bodyPrefab);
@@ -151,6 +165,7 @@ namespace MoreMonsters.Utils
             {
                 list.Add(masterPrefab);
             };
+
             //Registers the entitystates
             for(int i = 0; i < skillStates.Length; i++)
                 LoadoutAPI.AddSkill(skillStates[i]);

@@ -37,6 +37,7 @@ using Rewired.ComponentControls.Effects;
 
 
 /* To-Do List:
+ * Note: The Fly State is broken as shit right now due to not having viable animation layers. Come back to it when actual characters are ready to be implemented.
  * Implement model whenever that's possible
  */
 namespace MoreMonsters
@@ -86,7 +87,7 @@ namespace MoreMonsters
 
             IL.RoR2.Projectile.ProjectileImpactExplosion.FireChild -= IL_ProjectileImpactChildFix;
         }
-        ///<summary>Because the FireChild stuff was designed in a completely **FUCKING STUPID** WAY AND TAKES THE Z OFFETS FOR BOTH Y AND Z OF THE VECTOR... This injects some code to make it take the y offset</summary>
+        ///<summary>Because the FireChild stuff was designed in a completely **FUCKING STUPID** WAY AND USES THE PROVIDED Z-OFFET FOR BOTH Y AND Z OF THE VECTOR... This injects some code to make it take the y offset instead.</summary>
         private void IL_ProjectileImpactChildFix(ILContext il)
         {
             ILCursor c = new ILCursor(il);
@@ -109,104 +110,11 @@ namespace MoreMonsters
             cb.baseNameToken = "IMPSORCERER_BODY_NAME";
             cb.baseJumpCount = 0;
 
-            #region Potential Garbage
-            /*var fly = bodyPrefab.AddComponent<EntityStateMachine>();
-            fly.customName = "Flight";
-            fly.initialStateType = new SerializableEntityStateType(typeof(GenericCharacterMain));
-            fly.mainStateType = new SerializableEntityStateType(typeof(GenericCharacterMain));*/
-
-
-            /*var wispPrefab = Resources.Load<GameObject>("Prefabs/CharacterBodies/WispBody");
-
-            //Grabs the EntityStateMachine That needs to be manipulated
-            List<EntityStateMachine> bodyEntityStateMachines = new List<EntityStateMachine>();
-            bodyPrefab.GetComponents<EntityStateMachine>(bodyEntityStateMachines);
-            if (bodyEntityStateMachines[0].customName != "Body")
-                bodyEntityStateMachines.RemoveAt(0);
-
-            //Grabs the wisp EntityStateMachine the prefab one is being replaced with
-            List<EntityStateMachine> wispEntityStateMachines = new List<EntityStateMachine>();
-            wispPrefab.GetComponents<EntityStateMachine>(wispEntityStateMachines);
-            if (wispEntityStateMachines[0].customName != "Body")
-                wispEntityStateMachines.RemoveAt(0);
-
-            bodyEntityStateMachines[0].mainStateType = wispEntityStateMachines[0].mainStateType;
-
-            _______________________________________________________________________________*/
-
-            /*bodyPrefab = PrefabAPI.InstantiateClone(Resources.Load<GameObject>("Prefabs/CharacterBodies/BellBody"), "ImpSorcererBody");
-            var impPrefab = PrefabAPI.InstantiateClone(Resources.Load<GameObject>("Prefabs/CharacterBodies/ImpBody"), "ImpSorcererImpAssets");
-
-            List<EntityStateMachine> bodyEntityStateMachines = new List<EntityStateMachine>();
-            List<EntityStateMachine> impEntityStateMachines = new List<EntityStateMachine>();
-
-            //Replaces the modelbase for the bell with the imp one and adds other imp gameobjects
-            UnityEngine.Object.Destroy(bodyPrefab.transform.Find("mdlBell").gameObject);
-            impPrefab.transform.Find("mdlImp").SetParent(bodyPrefab.transform.Find("ModelBase"));
-            impPrefab.transform.Find("CameraPivot").SetParent(bodyPrefab.transform);
-            impPrefab.transform.Find("AimOrigin").SetParent(bodyPrefab.transform);
-
-            bodyPrefab.GetComponents<EntityStateMachine>(bodyEntityStateMachines);
-            impPrefab.GetComponents<EntityStateMachine>(impEntityStateMachines);
-            if(bodyEntityStateMachines[0].customName == "Body")
-            {
-                bodyEntityStateMachines[0].initialStateType = impEntityStateMachines[0].initialStateType;
-                bodyEntityStateMachines[1] = impEntityStateMachines[1];
-            }
-
-            UnityEngine.Object.Destroy(bodyPrefab.GetComponent<RigidbodyDirection>());
-            UnityEngine.Object.Destroy(bodyPrefab.GetComponent<RigidbodyMotor>());
-            var cpt0 = bodyPrefab.AddComponent<CharacterDirection>();
-            var cpt1 = bodyPrefab.AddComponent<CharacterMotor>();
-            var cpt2 = bodyPrefab.AddComponent<KinematicCharacterMotor>();
-            var cpt3 = bodyPrefab.GetComponent<CharacterBody>();
-            var cpt4 = bodyPrefab.GetComponent<CharacterDeathBehavior>();
-
-            cpt0 = impPrefab.GetComponent<CharacterDirection>();
-            cpt1 = impPrefab.GetComponent<CharacterMotor>();
-            cpt1.airControl = 1;
-            cpt1.isFlying = true;
-            cpt1.characterDirection = cpt0;k
-            cpt1.characterDirection = cpt0;k
-            cpt2 = impPrefab.GetComponent<KinematicCharacterMotor>();
-            cpt3 = impPrefab.GetComponent<CharacterBody>();
-            cpt1.body = cpt3;
-            cpt3.baseNameToken = "IMPSORCERER_BODY_NAME";
-            cpt4 = impPrefab.GetComponent<CharacterDeathBehavior>();*/
-
-
-            /*//Removes the BellArmature and replaces it with the Imp Armature
-            UnityEngine.Object.Destroy(bodyPrefab.transform.Find("BellArmature").gameObject);
-            impPrefab.transform.Find("ImpArmature").SetParent(bodyPrefab.transform.Find("mdlBell"));
-            //Removes the BellMesh and replaces it with the Imp Mesh
-            UnityEngine.Object.Destroy(bodyPrefab.transform.Find("BellMesh").gameObject);
-            impPrefab.transform.Find("ImpMesh").SetParent(bodyPrefab.transform.Find("mdlBell"));
-            //removes the aim assist from the bell and adds the imp one
-            UnityEngine.Object.Destroy(bodyPrefab.transform.Find("GameObject").gameObject);
-            impPrefab.transform.Find("AimAssist").SetParent(bodyPrefab.transform.Find("mdlBell"));*/
-
-
-
-
-            //var stateMachines = bodyPrefab.GetComponents<EntityStateMachine>();
-            #endregion
-
             //GameObject model = CreateModel(bodyPrefab);
             AddEyes();
             AddProjectiles();
             //All the other shit that needs to go here
 
-        }
-        public override void SkillSetup()
-        {
-            foreach (GenericSkill obj in bodyPrefab.GetComponentsInChildren<GenericSkill>())
-            {
-                BaseUnityPlugin.DestroyImmediate(obj);
-            }
-            PrimarySetup();
-            SecondarySetup();
-            UtilitySetup();
-            SpecialSetup();
         }
         public override void CreateMaster()
         {
@@ -290,8 +198,7 @@ namespace MoreMonsters
             fly.shouldTapButton = true;
             #endregion
         }
-
-        private void PrimarySetup()
+        public override void PrimarySetup()
         {
             SkillLocator component = bodyPrefab.GetComponent<SkillLocator>();
 
@@ -338,7 +245,7 @@ namespace MoreMonsters
             };
 
         }
-        private void SecondarySetup()
+        public override void SecondarySetup()
         {
             SkillLocator component = bodyPrefab.GetComponent<SkillLocator>();
 
@@ -386,7 +293,7 @@ namespace MoreMonsters
             };
 
         }
-        private void UtilitySetup()
+        public override void UtilitySetup()
         {
             SkillLocator component = bodyPrefab.GetComponent<SkillLocator>();
 
@@ -433,7 +340,7 @@ namespace MoreMonsters
                 viewableNode = new ViewablesCatalog.Node(skillDefUtility.skillNameToken, false, null)
             };
         }
-        private void SpecialSetup()
+        public override void SpecialSetup()
         {
             SkillLocator component = bodyPrefab.GetComponent<SkillLocator>();
 
@@ -662,6 +569,7 @@ namespace MoreMonsters
             indicator.transform.position = gameObject.transform.position;
         }
     }
+
     public class DestroyIndicator : MonoBehaviour
     {
         public GameObject projectileObject;
@@ -672,6 +580,7 @@ namespace MoreMonsters
                 Destroy(gameObject);
         }
     }
+
     public class ProjectileSteerAboveTarget : MonoBehaviour
     {
         public bool yAxisOnly;
@@ -743,6 +652,7 @@ namespace MoreMonsters
             }
         }
     }
+
     public class EyeManager : MonoBehaviour
     {
         public GameObject eyes;
@@ -765,6 +675,7 @@ namespace MoreMonsters
             followerController.AssignNewTarget(target);
         }
     }
+
     public class ImpSorcererEyeController : NetworkBehaviour
     {
         public GameObject effectPrefab;
@@ -1095,6 +1006,7 @@ namespace MoreMonsters
 }
 
 
+
 namespace MoreMonsters.States.ImpSorcerer
 {
     /*Imp has these animation layers:
@@ -1186,8 +1098,6 @@ namespace MoreMonsters.States.ImpSorcerer
         }
     }
 
-
-
     public class FireVoidCluster : BaseState
     {
         public static GameObject projectilePrefab;
@@ -1248,7 +1158,6 @@ namespace MoreMonsters.States.ImpSorcerer
             }
         }
     }
-
 
     public class SorcererBlinkState : BaseState
     {
@@ -1365,7 +1274,6 @@ namespace MoreMonsters.States.ImpSorcerer
             base.OnExit();
         }
     }
-
 
     public class EyeAttackState : BaseState
     {

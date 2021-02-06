@@ -33,6 +33,12 @@
     <Reference Include="R2API">
       <HintPath>lib\R2API.dll</HintPath>
     </Reference>
+    <Reference Include="Rewired_Core">
+      <HintPath>lib\Rewired_Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Rewired_CSharp">
+      <HintPath>lib\Rewired_CSharp.dll</HintPath>
+    </Reference>
     <Reference Include="ShareSuite">
       <HintPath>lib\ShareSuite.dll</HintPath>
     </Reference>

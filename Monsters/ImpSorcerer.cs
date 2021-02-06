@@ -29,7 +29,11 @@ using UnityEngine.Animations;
 using UnityEngine.Events;
 using UnityEngine.Networking;
 using UnityEngine.Serialization;
+using R2API.Networking;
 using static TILER2.MiscUtil;
+using System.Collections;
+using RoR2.Orbs;
+using Rewired.ComponentControls.Effects;
 
 
 /* To-Do List:
@@ -72,14 +76,102 @@ namespace MoreMonsters
             base.Install();
 
             IL.RoR2.Projectile.ProjectileImpactExplosion.FireChild += IL_ProjectileImpactChildFix;
+
+            #region EyeController
+            /*IL.RoR2.HealingFollowerController.FixedUpdateServer += il =>
+            {
+                ILCursor c = new ILCursor(il);
+                ILLabel label = c.DefineLabel();
+                c.Emit(OpCodes.Ldarg_0);
+                c.Emit(OpCodes.Isinst, typeof(ImpSorcererEyeController));
+                c.Emit(OpCodes.Dup);
+                c.Emit(OpCodes.Brfalse, label);
+                c.Emit(OpCodes.Callvirt, typeof(ImpSorcererEyeController).GetMethod("VirtFixedUpdateServer"));
+                c.Emit(OpCodes.Ret);
+                c.MarkLabel(label);
+                c.Emit(OpCodes.Pop);
+            };
+            IL.RoR2.HealingFollowerController.Update += il =>
+            {
+                ILCursor c = new ILCursor(il);
+                ILLabel label = c.DefineLabel();
+                c.Emit(OpCodes.Ldarg_0);
+                c.Emit(OpCodes.Isinst, typeof(ImpSorcererEyeController));
+                c.Emit(OpCodes.Dup);
+                c.Emit(OpCodes.Brfalse, label);
+                c.Emit(OpCodes.Callvirt, typeof(ImpSorcererEyeController).GetMethod("VirtUpdate"));
+                c.Emit(OpCodes.Ret);
+                c.MarkLabel(label);
+                c.Emit(OpCodes.Pop);
+            };
+            IL.RoR2.HealingFollowerController.AssignNewTarget += il =>
+            {
+                ILCursor c = new ILCursor(il);
+                ILLabel label = c.DefineLabel();
+                c.Emit(OpCodes.Ldarg_0);
+                c.Emit(OpCodes.Isinst, typeof(ImpSorcererEyeController));
+                c.Emit(OpCodes.Dup);
+                c.Emit(OpCodes.Brfalse, label);
+                c.Emit(OpCodes.Ldarg_1);
+                c.Emit(OpCodes.Callvirt, typeof(ImpSorcererEyeController).GetMethod("VirtAssignNewTarget"));
+                c.Emit(OpCodes.Ret);
+                c.MarkLabel(label);
+                c.Emit(OpCodes.Pop);
+            };*/
+            #endregion
+
         }
         public override void Uninstall()
         {
             base.Uninstall();
 
             IL.RoR2.Projectile.ProjectileImpactExplosion.FireChild -= IL_ProjectileImpactChildFix;
+
+            #region EyeController
+            /*IL.RoR2.HealingFollowerController.FixedUpdateServer -= il =>
+            {
+                ILCursor c = new ILCursor(il);
+                ILLabel label = c.DefineLabel();
+                c.Emit(OpCodes.Ldarg_0);
+                c.Emit(OpCodes.Isinst, typeof(ImpSorcererEyeController));
+                c.Emit(OpCodes.Dup);
+                c.Emit(OpCodes.Brfalse, label);
+                c.Emit(OpCodes.Callvirt, typeof(ImpSorcererEyeController).GetMethod("VirtFixedUpdateServer"));
+                c.Emit(OpCodes.Ret);
+                c.MarkLabel(label);
+                c.Emit(OpCodes.Pop);
+            };
+            IL.RoR2.HealingFollowerController.Update -= il =>
+            {
+                ILCursor c = new ILCursor(il);
+                ILLabel label = c.DefineLabel();
+                c.Emit(OpCodes.Ldarg_0);
+                c.Emit(OpCodes.Isinst, typeof(ImpSorcererEyeController));
+                c.Emit(OpCodes.Dup);
+                c.Emit(OpCodes.Brfalse, label);
+                c.Emit(OpCodes.Callvirt, typeof(ImpSorcererEyeController).GetMethod("VirtUpdate"));
+                c.Emit(OpCodes.Ret);
+                c.MarkLabel(label);
+                c.Emit(OpCodes.Pop);
+            };
+            IL.RoR2.HealingFollowerController.AssignNewTarget -= il =>
+            {
+                ILCursor c = new ILCursor(il);
+                ILLabel label = c.DefineLabel();
+                c.Emit(OpCodes.Ldarg_0);
+                c.Emit(OpCodes.Isinst, typeof(ImpSorcererEyeController));
+                c.Emit(OpCodes.Dup);
+                c.Emit(OpCodes.Brfalse, label);
+                c.Emit(OpCodes.Ldarg_1);
+                c.Emit(OpCodes.Callvirt, typeof(ImpSorcererEyeController).GetMethod("VirtAssignNewTarget"));
+                c.Emit(OpCodes.Ret);
+                c.MarkLabel(label);
+                c.Emit(OpCodes.Pop);
+            };*/
+            #endregion
+
         }
-        ///<summary>Because the FireChild stuff was designed in a completely **FUCKING STUPID** WAY AND TAKES THE Z OFFETS FOR BOTH Y AND Z OF THE VECTOR, this injects some code to make it take the y offset</summary>
+        ///<summary>Because the FireChild stuff was designed in a completely **FUCKING STUPID** WAY AND TAKES THE Z OFFETS FOR BOTH Y AND Z OF THE VECTOR... This injects some code to make it take the y offset</summary>
         private void IL_ProjectileImpactChildFix(ILContext il)
         {
             ILCursor c = new ILCursor(il);
@@ -98,8 +190,7 @@ namespace MoreMonsters
 
         public override void CreatePrefab()
         {
-            bodyPrefab = PrefabAPI.InstantiateClone(Resources.Load<GameObject>("Prefabs/CharacterBodies/ImpBody"), "ImpSorcererBody");
-
+            bodyPrefab = PrefabAPI.InstantiateClone(Resources.Load<GameObject>("Prefabs/CharacterBodies/ImpBody"), "ImpSorcererBody", true);
             var cb = bodyPrefab.GetComponent<CharacterBody>();
             cb.baseNameToken = "IMPSORCERER_BODY_NAME";
             cb.baseJumpCount = 0;
@@ -485,47 +576,79 @@ namespace MoreMonsters
         }
         private void AddEyes()
         {
-            /*eyes = Assets.mainAssetBundle.LoadAsset<GameObject>("EyeFollower");
-            GameObject healFollower = PrefabAPI.InstantiateClone(Resources.Load<GameObject>("prefabs/networkedobjects/HealingFollower"), "HealFollower", true);
-            MoreMonsters._logger.LogError("flag");
-
-            var eyesNetworkIdentity = eyes.AddComponent<NetworkIdentity>();
-            eyesNetworkIdentity = healFollower.GetComponent<NetworkIdentity>();
-
-            ImpSorcererEyeFollowerController followerController = eyes.AddComponent<ImpSorcererEyeFollowerController>();
-
-            Transform[] offsets = new Transform[] { eyes.transform.Find("Offset0"), eyes.transform.Find("Offset1"), eyes.transform.Find("Offset2") };
-            for (int i = 0; i < offsets.Length; i++)
-            {
-                PrefabAPI.InstantiateClone(Resources.Load<GameObject>("prefabs/networkedobjects/HealingFollower"), "temp" + i, false).transform.Find("Effect").SetParent(offsets[i].transform);
-                MoreMonsters._logger.LogError("flag");
-            }
-            healFollower.transform.Find("Indicator").SetParent(eyes.transform); ;
-
-            eyes = PrefabAPI.InstantiateClone(eyes, "EyeFollower", true);
-            MoreMonsters._logger.LogError("flag");
-
-
-            var addEyesComponent = bodyPrefab.AddComponent<EyeManager>();
-            addEyesComponent.eyes = this.eyes;
-            */
-
-            var eyesAssetBundle = Assets.mainAssetBundle.LoadAsset<GameObject>("EyeFollower");
+            var eyesAssetBundle = PrefabAPI.InstantiateClone(Assets.mainAssetBundle.LoadAsset<GameObject>("EyeFollower"), "EyeFollowerAssetBundle", false);
             eyes = PrefabAPI.InstantiateClone(Resources.Load<GameObject>("prefabs/networkedobjects/HealingFollower"), "ImpSorcererEyesFollower", true);
+
             UnityEngine.Object.Destroy(eyes.GetComponent<HealingFollowerController>());
-            UnityEngine.Object.Destroy(eyes.transform.Find("Offset").gameObject);
-            ImpSorcererEyeFollowerController followerController = eyes.AddComponent<ImpSorcererEyeFollowerController>();
+            var eyeController = eyes.AddComponent<ImpSorcererEyeController>();
+            var addEyesComponent = bodyPrefab.AddComponent<EyeManager>();
+
+            #region Adding Offsets
+            eyes.transform.position = Vector3.zero;
             Transform[] offsets = new Transform[] { eyesAssetBundle.transform.Find("Offset0"), eyesAssetBundle.transform.Find("Offset1"), eyesAssetBundle.transform.Find("Offset2") };
             for (int i = 0; i < offsets.Length; i++)
             {
-                offsets[i].SetParent(eyes.transform);
-                PrefabAPI.InstantiateClone(Resources.Load<GameObject>("prefabs/networkedobjects/HealingFollower"), "temp" + i, false).transform.Find("Offset").Find("Effect").SetParent(offsets[i]);
-                //var temp = PrefabAPI.InstantiateClone(Resources.Load<GameObject>("prefabs/networkedobjects/HealingFollower"), "temp" + i, true);
-                //temp.transform.Find("Offset").Find("Effect").SetParent(offsets[i]);
-            }
-            var addEyesComponent = bodyPrefab.AddComponent<EyeManager>();
-            addEyesComponent.eyes = this.eyes;
+                offsets[i].SetParent(eyes.transform, true);
+                //PrefabAPI.InstantiateClone(eyes.transform.Find("Offset/Effect/mdlWoodSprite").gameObject, "Model", false).transform.SetParent(offsets[i], false);
 
+
+                //This is wispy stuff
+                PrefabAPI.InstantiateClone(Resources.Load<GameObject>("prefabs/effects/orbeffects/WispOrbEffect"), "Model", false).transform.SetParent(offsets[i], false);
+                UnityEngine.Object.Destroy(offsets[i].GetComponentInChildren<OrbEffect>());
+                UnityEngine.Object.Destroy(offsets[i].GetComponentInChildren<EffectComponent>());
+                UnityEngine.Object.Destroy(offsets[i].transform.Find("Model/Mesh").GetComponent<RotateAroundAxis>());
+            }
+            UnityEngine.Object.Destroy(eyes.transform.Find("Offset").gameObject);
+            #endregion
+
+            #region Indicator
+            UnityEngine.Object.Destroy(eyes.transform.Find("Indicator").gameObject);
+            var beetleGuardIndicator = PrefabAPI.InstantiateClone(Resources.Load<GameObject>("prefabs/characterbodies/BeetleGuardBody").transform.Find("ModelBase/mdlBeetleGuard/SlamZone/HitboxGroup/GroundSlamIndicator").gameObject, "Indicator", false);
+            beetleGuardIndicator.transform.SetParent(eyes.transform, false);
+            beetleGuardIndicator.transform.localScale *= 1.5f;
+            beetleGuardIndicator.transform.localPosition = Vector3.zero;
+            beetleGuardIndicator.GetComponent<MeshFilter>().mesh = Resources.Load<GameObject>("Prefabs/Projectiles/ImpVoidspikeProjectile").transform.Find("ImpactEffect/AreaIndicator").GetComponent<MeshFilter>().mesh;
+            beetleGuardIndicator.GetComponent<MeshRenderer>().material = Resources.Load<GameObject>("Prefabs/Projectiles/ImpVoidspikeProjectile").transform.Find("ImpactEffect/AreaIndicator").GetComponent<MeshRenderer>().material;
+            UnityEngine.Object.Destroy(beetleGuardIndicator.transform.Find("Arrow Holder").gameObject);
+            for (int i = 1; i < 8; i++)
+                UnityEngine.Object.Destroy(beetleGuardIndicator.transform.Find("Arrow Holder (" + i + ")").gameObject);
+            #endregion
+
+            #region Adding Effects
+            var eyeEffect = PrefabAPI.InstantiateClone(Resources.Load<GameObject>("prefabs/effects/ImpDeathEffect"), "ImpSorcererEyeAttackEffect", false);
+            //UnityEngine.Object.Destroy(eyeEffect.transform.Find("PP").gameObject);
+
+            eyeEffect.GetComponent<EffectComponent>().effectIndex = EffectIndex.Invalid;
+            eyeEffect.GetComponent<EffectComponent>().effectData = null;
+            eyeEffect.GetComponent<EffectComponent>().applyScale = true;
+            eyeEffect.GetComponent<VFXAttributes>().secondaryParticleSystem = null;
+            eyeEffect.transform.localScale = new Vector3(0.6f, 0.6f, 0.6f);
+
+            var particleSystems = eyeEffect.GetComponentsInChildren<ParticleSystem>();
+            foreach (ParticleSystem particleSystem in particleSystems)
+            {
+                var main = particleSystem.main;
+                main.simulationSpeed = 1.5f;
+            }
+
+            EffectAPI.AddEffect(eyeEffect);
+            #endregion
+
+            #region Defining stuff
+            eyeController.effectPrefab = eyeEffect;
+            eyeController.acceleration = 10f;
+            eyeController.rotationAngularVelocity = 30f;
+            eyeController.damage = 0.3f;
+            eyeController.enableSpringMotion = false;
+
+            eyeController.attackTelegraphTime = 2f;
+            eyeController.attackTelegraphStopMovingTime = 1.2f;
+            eyeController.attackTime = 2f;
+            eyeController.attackInterval = (eyeController.attackTime + eyeController.attackTelegraphTime + eyeController.attackTelegraphStopMovingTime);
+            eyeController.attackTimer = eyeController.attackInterval;
+            #endregion
+
+            addEyesComponent.eyes = eyes;
         }
         private void AddProjectiles()
         {
@@ -714,35 +837,46 @@ namespace MoreMonsters
             }
         }
     }
-    public class EyeManager : NetworkBehaviour
+    public class EyeManager : MonoBehaviour
     {
         public GameObject eyes;
         private GameObject eyesInstance;
+        private ImpSorcererEyeController followerController;
         public void Start()
         {
             eyesInstance = Instantiate(eyes, gameObject.transform.position, gameObject.transform.rotation);
-            var followerController = eyesInstance.GetComponent<ImpSorcererEyeFollowerController>();
+            followerController = eyesInstance.GetComponent<ImpSorcererEyeController>();
             followerController.NetworkownerBodyObject = gameObject;
+            followerController.ownerBodyObject = gameObject;
+            followerController.indicator = eyesInstance.transform.Find("Indicator");
+
+        }
+
+        public void SetTarget(GameObject target, float attackSpeed, float damage)
+        {
+            followerController.attackSpeed = attackSpeed;
+            followerController.damage = damage;
+            followerController.AssignNewTarget(target);
         }
     }
 
-    public class ImpSorcererEyeFollowerController : NetworkBehaviour
+    public class ImpSorcererEyeController : NetworkBehaviour
     {
+        public GameObject effectPrefab;
         public float attackSpeed;
         public float damage;
-        public float attackTelegraphTime = 3f;
-        public float attackTelegraphStopMovingTime = 1.5f;
-        public float attackTime = 3f;
+        public float attackTelegraphTime;
+        public float attackTelegraphStopMovingTime;
+        public float attackTime;
         public float rotationAngularVelocity;
-        public float acceleration = 10f;
-        public float damping = 2f;
+        public float acceleration = 15f;
+        public float damping = 0.3f;
         public bool enableSpringMotion = false;
         [SyncVar]
         public GameObject ownerBodyObject;
         [SyncVar]
         public GameObject targetBodyObject;
-        public GameObject burstHealEffect;
-        public GameObject indicator;
+        public Transform indicator;
         public GameObject NetworkownerBodyObject
         {
             get
@@ -768,156 +902,107 @@ namespace MoreMonsters
             }
         }
         private GameObject cachedTargetBodyObject;
-        [SyncVar]
+        private HurtBox cachedTargetHurtBox;
+        public float attackInterval;
         public float attackTimer;
-        /*public float NetworkattackTimer
-        {
-            get 
-            {
-                return attackTimer;
-            }
-            [param: In]
-            set
-            {
-                SetSyncVar<float>(value, ref attackTimer, 3U);
-            }
-        }
-        private float cachedAttackTimer;*/
-        private bool attacked = false;
-        private Vector3 velocity;
+        public bool attacked = false;
+        private bool hasDoneEffect = false;
+        private Vector3 velocity = Vector3.zero;
         private NetworkInstanceId ___ownerBodyObjectNetId;
         private NetworkInstanceId ___targetBodyObjectNetId;
-        private SubState subState;
-        private enum SubState
+        public SubState subState = SubState.CirclingImp;
+        public static SubState[] notAttackSubstates = new SubState[] { SubState.CirclingImp, SubState.MovingToTarget };
+        public static SubState[] telegraphSubstates = new SubState[] { SubState.TelegraphAttack, SubState.TelegraphAttackStopMoving };
+        public enum SubState
         {
             CirclingImp,
+            MovingToTarget,
             TelegraphAttack,
             TelegraphAttackStopMoving
         }
 
-
         private void FixedUpdate()
         {
-            if (!ownerBodyObject)
-                UnityEngine.Object.Destroy(gameObject);
             if (cachedTargetBodyObject != targetBodyObject)
             {
                 cachedTargetBodyObject = targetBodyObject;
+                OnTargetChanged();
             }
             if (NetworkServer.active)
             {
                 FixedUpdateServer();
             }
         }
-        private void FixedUpdateServer()
+        public void FixedUpdateServer()
         {
-            if (subState != SubState.CirclingImp)
+            if (!notAttackSubstates.Contains(subState))
             {
-                attackTimer -= Time.fixedDeltaTime;
-                if (attackTimer <= attackTime / attackSpeed && attacked == false)
-                    DoAttack();
+                attackTimer -= Time.fixedDeltaTime * attackSpeed;
+                if (attackTimer <= 0f)
+                {
+                    attackTimer = attackInterval;
+                    attacked = false;
+                    AssignNewTarget(ownerBodyObject);
+                }
                 else
-                    if (attackTimer <= (attackTime + attackTelegraphStopMovingTime) / attackSpeed)
-                    subState = SubState.TelegraphAttackStopMoving;
+                {
+                    if (attackTimer <= attackTime && attacked == false)
+                        DoAttack();
+                    else
+                    {
+                        if (attackTimer <= attackTime + attackTelegraphStopMovingTime)
+                            subState = SubState.TelegraphAttackStopMoving;
+                    }
+                }
             }
-            if (attackTimer <= 0f)
-                AssignNewTarget(ownerBodyObject);
             if (!targetBodyObject)
-            {
-                NetworktargetBodyObject = ownerBodyObject;
-                subState = SubState.CirclingImp;
-            }
+                if (targetBodyObject == ownerBodyObject || !targetBodyObject)
+                {
+                    NetworktargetBodyObject = ownerBodyObject;
+                    subState = SubState.CirclingImp;
+                    attacked = false;
+                    hasDoneEffect = false;
+                    attackTimer = attackInterval;
+                }
             if (!ownerBodyObject)
                 UnityEngine.Object.Destroy(gameObject);
-            if (NetworktargetBodyObject == ownerBodyObject || subState == SubState.CirclingImp)
-            {
-                attackTimer = (attackTime + attackTelegraphTime + attackTelegraphStopMovingTime) / attackSpeed;
-                attacked = false;
-            }
         }
-
-        [Server]
-        public void AssignNewTarget(GameObject target)
+        public void Update()
         {
-            if (!NetworkServer.active)
-            {
-                Debug.LogWarning("[Server] function 'System.Void MoreMonsters.SorcererEyeFollowerController::AssignNewTarget(UnityEngine.GameObject)' called on client");
-                return;
-            }
-            NetworktargetBodyObject = (target ? target : ownerBodyObject);
-            cachedTargetBodyObject = targetBodyObject;
-
-            if (NetworktargetBodyObject == ownerBodyObject)
-                subState = SubState.CirclingImp;
-        }
-
-        private void Update()
-        {
-            if (subState == SubState.TelegraphAttack || subState == SubState.CirclingImp)
+            if (subState != SubState.TelegraphAttackStopMoving)
             {
                 UpdateMotion();
                 transform.position += velocity * Time.deltaTime;
-                if (subState == SubState.TelegraphAttack)
-                {
-                    for (int i = 0; i < 4; i++)
-                    {
-                        gameObject.transform.Find("Offset" + i).forward = Vector3.RotateTowards(gameObject.transform.Find("Offset" + i).forward, (targetBodyObject.GetComponent<CharacterBody>().mainHurtBox.gameObject.transform.position) - gameObject.transform.Find("Offset" + i).position, 180f * 0.0174532924f * Time.fixedDeltaTime, 0f);
-                    }
-                }
-                else
-                    transform.rotation = Quaternion.AngleAxis(rotationAngularVelocity * Time.deltaTime, Vector3.up) * transform.rotation;
+                UpdateRotation();
                 if (targetBodyObject != ownerBodyObject)
                 {
-                    indicator.transform.position = GetTargetPosition();
+                    if (Vector3.Distance(targetBodyObject.GetComponent<CharacterBody>().corePosition, transform.position) <= 1f)
+                        subState = SubState.TelegraphAttack;
                 }
             }
-        }
-
-        [Server]
-        private void DoAttack()
-        {
-            if (!NetworkServer.active)
+            else
             {
-                Debug.LogWarning("[Server] function 'System.Void MoreMonsters.SorcererEyeFollowerController::DoAttack(System.Single)' called on client");
-                return;
+                for (int i = 0; i < 3; i++)
+                {
+                    var offset = transform.Find("Offset" + i);
+                    EffectData effectData = new EffectData
+                    {
+                        origin = offset.position,
+                        scale = 0.6f,
+                        rotation = Quaternion.Euler(90f, offset.eulerAngles.y, 0f)
+                    };
+                    EffectManager.SpawnEffect(effectPrefab, effectData, false);
+                    hasDoneEffect = true;
+                }
             }
-
-            attacked = true;
-            for (int i = 0; i < 4; i++)
-            {
-                gameObject.transform.Find("Offset" + i);
-                ProjectileManager.instance.FireProjectile(Resources.Load<GameObject>("prefabs/projectiles/GravekeeperHookProjectileSimple"), gameObject.transform.Find("Offset" + i).position, Util.QuaternionSafeLookRotation(gameObject.transform.Find("Offset" + i).forward), ownerBodyObject, damage, 0f, false, DamageColorIndex.Default);
-            }
+            if (telegraphSubstates.Contains(subState) && indicator.gameObject.activeSelf == false)
+                EnableIndicator();
+            if (!telegraphSubstates.Contains(subState) && indicator.gameObject.activeSelf == true)
+                DisableIndicator();
         }
-
-
-        private Vector3 GetTargetPosition()
-        {
-            GameObject gameObject = targetBodyObject ?? ownerBodyObject;
-            if (!gameObject)
-            {
-                return transform.position;
-            }
-            CharacterBody component = gameObject.GetComponent<CharacterBody>();
-            if (!component)
-            {
-                return gameObject.transform.position;
-            }
-            return component.corePosition;
-        }
-
-        private Vector3 GetDesiredPosition()
-        {
-            return GetTargetPosition();
-        }
-
         private void UpdateMotion()
         {
             Vector3 desiredPosition = GetDesiredPosition();
-            if ((desiredPosition - transform.position).sqrMagnitude <= 4f)
-            {
-                subState = SubState.TelegraphAttack;
-            }
             if (enableSpringMotion)
             {
                 Vector3 lhs = desiredPosition - transform.position;
@@ -934,9 +1019,104 @@ namespace MoreMonsters
                 transform.position = Vector3.SmoothDamp(transform.position, desiredPosition, ref velocity, damping, 14f);
             }
         }
-
-        private void UNetVersion()
+        private void UpdateRotation()
         {
+            switch (subState)
+            {
+                case SubState.CirclingImp:
+                    var aimRay = ownerBodyObject.GetComponent<InputBankTest>().GetAimRay();
+                    for (int i = 0; i < 3; i++)
+                    {
+                        var offset = transform.Find("Offset" + i);
+                        //offset.rotation = Quaternion.RotateTowards(offset.rotation, Util.QuaternionSafeLookRotation(aimRay.direction), 180f * 0.0174532924f * Time.fixedDeltaTime);
+                        offset.forward = Vector3.RotateTowards(offset.forward, aimRay.direction, 180f * 0.0174532924f * Time.fixedDeltaTime, 0f);
+                    }
+                    transform.rotation = Quaternion.AngleAxis(rotationAngularVelocity * Time.deltaTime, Vector3.up) * transform.rotation;
+                    break;
+                default:
+                    for (int i = 0; i < 3; i++)
+                    {
+                        var offset = gameObject.transform.Find("Offset" + i);
+                        offset.forward = Vector3.RotateTowards(offset.forward, cachedTargetHurtBox.transform.position - offset.position, 180f * 0.0174532924f * Time.fixedDeltaTime, 0f);
+                    }
+                    transform.rotation = Quaternion.AngleAxis(rotationAngularVelocity * Time.deltaTime, Vector3.up) * transform.rotation;
+                    break;
+            }
+        }
+        [Server]
+        public void AssignNewTarget(GameObject target)
+        {
+            if (!NetworkServer.active)
+            {
+                Debug.LogWarning("[Server] function 'System.Void MoreMonsters.SorcererEyeFollowerController::AssignNewTarget(UnityEngine.GameObject)' called on client");
+                return;
+            }
+            this.NetworktargetBodyObject = (target ? target : this.ownerBodyObject);
+            this.cachedTargetBodyObject = this.targetBodyObject;
+            OnTargetChanged();
+            if (NetworkServer.active)
+            {
+                if (NetworktargetBodyObject == ownerBodyObject)
+                    subState = SubState.CirclingImp;
+                else
+                    subState = SubState.MovingToTarget;
+            }
+        }
+
+        [Server]
+        private void DoAttack()
+        {
+            if (!NetworkServer.active)
+            {
+                Debug.LogWarning("[Server] function 'System.Void MoreMonsters.SorcererEyeFollowerController::DoAttack(System.Single)' called on client");
+                return;
+            }
+
+            attacked = true;
+            hasDoneEffect = false;
+            for (int i = 0; i < 3; i++)
+            {
+                var offset = gameObject.transform.Find("Offset" + i);
+                ProjectileManager.instance.FireProjectile(Resources.Load<GameObject>("prefabs/projectiles/GravekeeperHookProjectileSimple"), offset.position, Util.QuaternionSafeLookRotation(offset.forward), ownerBodyObject, damage, 0f, false, DamageColorIndex.Default);
+            }
+        }
+
+        private void EnableIndicator()
+        {
+            if (indicator)
+            {
+                indicator.gameObject.SetActive(true);
+                ObjectScaleCurve component = indicator.gameObject.GetComponent<ObjectScaleCurve>();
+                if (component)
+                    component.time = 0.3f;
+            }
+        }
+        private void DisableIndicator()
+        {
+            if (indicator)
+                indicator.gameObject.SetActive(false);
+        }
+        private Vector3 GetTargetPosition()
+        {
+            GameObject gameObject = targetBodyObject ?? ownerBodyObject;
+            if (!gameObject)
+            {
+                return transform.position;
+            }
+            CharacterBody component = gameObject.GetComponent<CharacterBody>();
+            if (!component)
+            {
+                return gameObject.transform.position;
+            }
+            return component.corePosition;
+        }
+        private Vector3 GetDesiredPosition()
+        {
+            return GetTargetPosition();
+        }
+        private void OnTargetChanged()
+        {
+            this.cachedTargetHurtBox = (this.cachedTargetBodyObject ? this.cachedTargetBodyObject.GetComponent<CharacterBody>().mainHurtBox : null);
         }
         public override bool OnSerialize(NetworkWriter writer, bool forceAll)
         {
@@ -1005,13 +1185,234 @@ namespace MoreMonsters
             base.OnStartClient();
             transform.position = GetDesiredPosition();
         }
-        public override void OnStartServer()
-        {
-            base.OnStartServer();
-            attackTimer = (attackTime + attackTelegraphTime + attackTelegraphStopMovingTime) / attackSpeed;
-            subState = SubState.CirclingImp;
-        }
+
     }
+
+    /*public class ImpSorcererEyeController : HealingFollowerController
+    {
+        public float attackSpeed = 1f;
+        public float damage;
+        public float attackTelegraphTime = 3f;
+        public float attackTelegraphStopMovingTime = 1.5f;
+        public float attackTime = 3f;
+        public float attackInterval;
+        public float attackTimer;
+        private bool attacked = false;
+        private SubState subState = SubState.CirclingImp;
+        private Vector3 velocity;
+        private GameObject cachedTargetBodyObject;
+        private HealthComponent cachedTargetHealthComponent;
+        private float healingTimer;
+        private NetworkInstanceId ___ownerBodyObjectNetId;
+        private NetworkInstanceId ___targetBodyObjectNetId;
+        private enum SubState
+        {
+            CirclingImp,
+            TelegraphAttack,
+            TelegraphAttackStopMoving
+        }
+
+        /*public ImpSorcererEyeController()
+        {
+            IL.RoR2.HealingFollowerController.FixedUpdateServer += il =>
+            {
+                ILCursor c = new ILCursor(il);
+                ILLabel label = c.DefineLabel();
+                c.Emit(OpCodes.Ldarg_0);
+                c.Emit(OpCodes.Isinst, typeof(ImpSorcererEyeController));
+                c.Emit(OpCodes.Dup);
+                c.Emit(OpCodes.Brfalse, label);
+                c.Emit(OpCodes.Callvirt, typeof(ImpSorcererEyeController).GetMethod("VirtFixedUpdateServer"));
+                c.Emit(OpCodes.Ret);
+                c.MarkLabel(label);
+                c.Emit(OpCodes.Pop);
+            };
+            IL.RoR2.HealingFollowerController.Update += il =>
+            {
+                ILCursor c = new ILCursor(il);
+                ILLabel label = c.DefineLabel();
+                c.Emit(OpCodes.Ldarg_0);
+                c.Emit(OpCodes.Isinst, typeof(ImpSorcererEyeController));
+                c.Emit(OpCodes.Dup);
+                c.Emit(OpCodes.Brfalse, label);
+                c.Emit(OpCodes.Callvirt, typeof(ImpSorcererEyeController).GetMethod("VirtUpdate"));
+                c.Emit(OpCodes.Ret);
+                c.MarkLabel(label);
+                c.Emit(OpCodes.Pop);
+            };
+            IL.RoR2.HealingFollowerController.UpdateMotion += il =>
+            {
+                ILCursor c = new ILCursor(il);
+                ILLabel label = c.DefineLabel();
+                c.Emit(OpCodes.Ldarg_0);
+                c.Emit(OpCodes.Isinst, typeof(ImpSorcererEyeController));
+                c.Emit(OpCodes.Dup);
+                c.Emit(OpCodes.Brfalse, label);
+                c.Emit(OpCodes.Callvirt, typeof(ImpSorcererEyeController).GetMethod("VirtUpdateMotion"));
+                c.Emit(OpCodes.Ret);
+                c.MarkLabel(label);
+                c.Emit(OpCodes.Pop);
+            };
+            IL.RoR2.HealingFollowerController.AssignNewTarget += il =>
+            {
+                ILCursor c = new ILCursor(il);
+                ILLabel label = c.DefineLabel();
+                c.Emit(OpCodes.Ldarg_0);
+                c.Emit(OpCodes.Isinst, typeof(ImpSorcererEyeController));
+                c.Emit(OpCodes.Dup);
+                c.Emit(OpCodes.Brfalse, label);
+                c.Emit(OpCodes.Callvirt, typeof(ImpSorcererEyeController).GetMethod("VirtAssignNewTarget"));
+                c.Emit(OpCodes.Ret);
+                c.MarkLabel(label);
+                c.Emit(OpCodes.Pop);
+            };
+            IL.RoR2.HealingFollowerController.OnStartClient += il =>
+            {
+                ILCursor c = new ILCursor(il);
+                ILLabel label = c.DefineLabel();
+                c.Emit(OpCodes.Ldarg_0);
+                c.Emit(OpCodes.Isinst, typeof(ImpSorcererEyeController));
+                c.Emit(OpCodes.Dup);
+                c.Emit(OpCodes.Brfalse, label);
+                c.Emit(OpCodes.Callvirt, typeof(ImpSorcererEyeController).GetMethod("VirtOnStartClient"));
+                c.Emit(OpCodes.Ret);
+                c.MarkLabel(label);
+                c.Emit(OpCodes.Pop);
+            };
+        }
+
+        public virtual void VirtFixedUpdateServer()
+        {
+            if (subState != SubState.CirclingImp)
+            {
+                attackTimer -= Time.fixedDeltaTime * attackSpeed;
+                if (attackTimer <= 0f)
+                {
+                    attackTimer = attackInterval;
+                    attacked = false;
+                    VirtAssignNewTarget(ownerBodyObject);
+                }
+                else
+                {
+                    if (attackTimer <= attackTime && attacked == false)
+                        DoAttack();
+                    else
+                    {
+                        if (attackTimer <= attackTime + attackTelegraphStopMovingTime)
+                            subState = SubState.TelegraphAttackStopMoving;
+                    }
+                }
+            }
+            if (!targetBodyObject)
+                if (targetBodyObject == ownerBodyObject || !targetBodyObject)
+                {
+                    NetworktargetBodyObject = ownerBodyObject;
+                    subState = SubState.CirclingImp;
+                }
+            if (!ownerBodyObject)
+                UnityEngine.Object.Destroy(gameObject);
+        }
+        public virtual void VirtUpdate()
+        {
+            if (subState == SubState.TelegraphAttack || subState == SubState.CirclingImp)
+            {
+                VirtUpdateMotion();
+                transform.position += velocity * Time.deltaTime;
+                if (subState == SubState.TelegraphAttack)
+                {
+                    for (int i = 0; i < 4; i++)
+                    {
+                        var offset = gameObject.transform.Find("Offset" + i);
+                        offset.forward = Vector3.RotateTowards(offset.forward, (targetBodyObject.GetComponent<CharacterBody>().mainHurtBox.transform.position) - offset.position, 180f * 0.0174532924f * Time.fixedDeltaTime, 0f);
+                    }
+                }
+                else
+                    transform.rotation = Quaternion.AngleAxis(rotationAngularVelocity * Time.deltaTime, Vector3.up) * transform.rotation;
+                if (targetBodyObject != ownerBodyObject)
+                {
+                    indicator.transform.position = VirtGetTargetPosition();
+                }
+                if ((targetBodyObject.GetComponent<CharacterBody>().mainHurtBox.transform.position - transform.position).sqrMagnitude <= 1f)
+                {
+                    subState = SubState.TelegraphAttack;
+                }
+            }
+        }
+        public virtual void VirtUpdateMotion()
+        {
+            Vector3 desiredPosition = VirtGetDesiredPosition();
+            if (enableSpringMotion)
+            {
+                Vector3 lhs = desiredPosition - transform.position;
+                if (lhs != Vector3.zero)
+                {
+                    Vector3 a = lhs.normalized * acceleration;
+                    Vector3 b = velocity * -damping;
+                    velocity += (a + b) * Time.deltaTime;
+                    return;
+                }
+            }
+            else
+            {
+                transform.position = Vector3.SmoothDamp(transform.position, desiredPosition, ref velocity, damping, 14f);
+            }
+        }
+
+        [Server]
+        public void VirtAssignNewTarget(GameObject target)
+        {
+            if (!NetworkServer.active)
+            {
+                Debug.LogWarning("[Server] function 'System.Void MoreMonsters.SorcererEyeFollowerController::VirtAssignNewTarget(UnityEngine.GameObject)' called on client");
+                return;
+            }
+            this.NetworktargetBodyObject = (target ? target : this.ownerBodyObject);
+            this.cachedTargetBodyObject = this.targetBodyObject;
+            if (NetworkServer.active)
+            {
+                if (NetworktargetBodyObject == ownerBodyObject)
+                    subState = SubState.CirclingImp;
+            }
+        }
+        private Vector3 VirtGetTargetPosition()
+        {
+            GameObject gameObject = targetBodyObject ?? ownerBodyObject;
+            if (!gameObject)
+            {
+                return transform.position;
+            }
+            CharacterBody component = gameObject.GetComponent<CharacterBody>();
+            if (!component)
+            {
+                return gameObject.transform.position;
+            }
+            return component.corePosition;
+        }
+
+        private Vector3 VirtGetDesiredPosition()
+        {
+            return VirtGetTargetPosition();
+        }
+
+        [Server]
+        private void DoAttack()
+        {
+            if (!NetworkServer.active)
+            {
+                Debug.LogWarning("[Server] function 'System.Void MoreMonsters.SorcererEyeFollowerController::DoAttack(System.Single)' called on client");
+                return;
+            }
+
+            attacked = true;
+            for (int i = 0; i < 4; i++)
+            {
+                var offset = gameObject.transform.Find("Offset" + i);
+                ProjectileManager.instance.FireProjectile(Resources.Load<GameObject>("prefabs/projectiles/GravekeeperHookProjectileSimple"), offset.position, Util.QuaternionSafeLookRotation(offset.forward), ownerBodyObject, damage, 0f, false, DamageColorIndex.Default);
+            }
+        }
+
+    }*/
+
 
 }
 
@@ -1290,8 +1691,6 @@ namespace MoreMonsters.States.ImpSorcerer
 
     public class EyeAttackState : BaseState
     {
-        public static GameObject projectilePrefab;
-        public static GameObject effectPrefab;
         public static float baseDuration = 3.5f;
         public static float damageCoefficient = 4f;
         public static float procCoefficient;
@@ -1304,10 +1703,8 @@ namespace MoreMonsters.States.ImpSorcerer
         public static float walkSpeedPenaltyCoefficient;
         private Animator modelAnimator;
         private float duration;
-        private int slashCount;
         private Transform modelTransform;
-        private ImpSorcererEyeFollowerController eyeFollowerController;
-        private BullseyeSearch bullseyeSearch;
+        private EyeManager eyeManager;
 
         public override void OnEnter()
         {
@@ -1319,7 +1716,7 @@ namespace MoreMonsters.States.ImpSorcerer
             base.StartAimMode(aimRay, 2f, false);
             base.characterMotor.walkSpeedPenaltyCoefficient = walkSpeedPenaltyCoefficient;
             //Util.PlayScaledSound(enterSoundString, base.gameObject, attackSpeedStat);
-            eyeFollowerController = gameObject.GetComponent<ImpSorcererEyeFollowerController>();
+            eyeManager = gameObject.GetComponent<EyeManager>();
             if (modelAnimator)
             {
                 base.PlayAnimation("Gesture, Additive", "DoubleSlash", "DoubleSlash.playbackRate", duration);
@@ -1327,8 +1724,6 @@ namespace MoreMonsters.States.ImpSorcerer
             }
             if (base.isAuthority && NetworkServer.active)
             {
-                eyeFollowerController.damage = damageStat * damageCoefficient;
-                eyeFollowerController.attackSpeed = attackSpeedStat;
                 BullseyeSearch bullseyeSearch = new BullseyeSearch();
                 bullseyeSearch.teamMaskFilter = TeamMask.allButNeutral;
                 if (base.teamComponent)
@@ -1336,7 +1731,7 @@ namespace MoreMonsters.States.ImpSorcerer
                     bullseyeSearch.teamMaskFilter.RemoveTeam(base.teamComponent.teamIndex);
                 }
                 bullseyeSearch.maxDistanceFilter = 70f;
-                bullseyeSearch.maxAngleFilter = 90f;
+                bullseyeSearch.maxAngleFilter = 100f;
                 bullseyeSearch.searchOrigin = aimRay.origin;
                 bullseyeSearch.searchDirection = aimRay.direction;
                 bullseyeSearch.filterByLoS = false;
@@ -1345,7 +1740,7 @@ namespace MoreMonsters.States.ImpSorcerer
                 HurtBox hurtBox = bullseyeSearch.GetResults().FirstOrDefault<HurtBox>();
                 if (hurtBox)
                 {
-                    eyeFollowerController.AssignNewTarget(hurtBox.gameObject);
+                    eyeManager.SetTarget(hurtBox.healthComponent.body.gameObject, attackSpeedStat, damageStat * damageCoefficient);
                 }
             }
             if (base.characterBody)

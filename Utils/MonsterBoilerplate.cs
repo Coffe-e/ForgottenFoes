@@ -39,7 +39,7 @@ namespace MoreMonsters.Utils
         ///<summary>The standard named used in files without any prefixes. If the names for these files are not consistent, there may be null references.</summary>
         public abstract string nameTag { get; }
 
-        ///<summary>Skillstates to be registered should be here</summary>
+        ///<summary>Skillstates to be registered should be here.</summary>
         public abstract Type[] skillStates { get; }
 
         ///<summary>How big the monster is.</summary>

@@ -798,17 +798,20 @@ namespace MoreMonsters
             }
             else
             {
-                for (int i = 0; i < 3; i++)
+                if (hasDoneEffect == false)
                 {
-                    var offset = transform.Find("Offset" + i);
-                    EffectData effectData = new EffectData
+                    for (int i = 0; i < 3; i++)
                     {
-                        origin = offset.position,
-                        scale = 0.6f,
-                        rotation = Quaternion.Euler(90f, offset.eulerAngles.y, 0f)
-                    };
-                    EffectManager.SpawnEffect(effectPrefab, effectData, false);
-                    hasDoneEffect = true;
+                        var offset = transform.Find("Offset" + i);
+                        EffectData effectData = new EffectData
+                        {
+                            origin = offset.position,
+                            scale = 0.6f,
+                            rotation = Quaternion.Euler(90f, offset.eulerAngles.y, 0f)
+                        };
+                        EffectManager.SpawnEffect(effectPrefab, effectData, false);
+                        hasDoneEffect = true;
+                    }
                 }
             }
             if (telegraphSubstates.Contains(subState) && indicator.gameObject.activeSelf == false)

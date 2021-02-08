@@ -125,13 +125,9 @@ namespace MoreMonsters.Utils
                     if (args.oldValue != args.newValue)
                     {
                         if ((bool)args.newValue == true)
-                        {
                             if (Run.instance != null && Run.instance.enabled) Chat.AddMessage($"<color=#{ColorCatalog.GetColorHexString(ColorCatalog.ColorIndex.Blood)}>{displayName}</color> has been <color=#aaffaa>ENABLED</color>. It will now spawn, and existing copies will start working again.");
-                        }
                         else
-                        {
                             if (Run.instance != null && Run.instance.enabled) Chat.AddMessage($"<color=#{ColorCatalog.GetColorHexString(ColorCatalog.ColorIndex.Blood)}>{displayName}</color> has been <color=#ffaaaa>DISABLED</color>. It will no longer spawn, and existing copies will stop working.");
-                        }
                     }
                 }
             };

@@ -55,7 +55,7 @@ namespace MoreMonsters
         };
         public override HullClassification hullSize => HullClassification.Human;
         public override MapNodeGroup.GraphType graphType => MapNodeGroup.GraphType.Air;
-        public override int creditCost => 27;
+        public override int creditCost => 51;
         public override bool occupyPosition => true;
         public override int selectionWeight => 1;
         public override DirectorCore.MonsterSpawnDistance spawnDistance => DirectorCore.MonsterSpawnDistance.Far;

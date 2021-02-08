@@ -16,7 +16,6 @@ using Path = System.IO.Path;
 
 /* TO DO:
  * Add Logbook support
- * Flesh out config options for the boilerplate
  * Fuck with entity states
  */
 namespace MoreMonsters

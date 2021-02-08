@@ -62,9 +62,6 @@ namespace MoreMonsters
         SkillDef skillDefSecondary;
         SkillDef skillDefUtility;
         SkillDef skillDefSpecial;
-        GameObject projectilePrefab;
-        GameObject spikePrefab;
-        GameObject eyes;
 
         public override void Install()
         {
@@ -77,6 +74,7 @@ namespace MoreMonsters
 
         public override void CreatePrefab()
         {
+
         }
         public override void CreateMaster()
         {

@@ -144,9 +144,8 @@ namespace MoreMonsters.Utils
         {
             base.SetupAttributes();
             
-            //These current have no use, I can probably do something with them
-            /*nameToken = $"{modInfo.longIdentifier}_{name.ToUpper()}_NAME";
-            loreToken = $"{modInfo.longIdentifier}_{name.ToUpper()}_LORE";*/
+            nameToken = $"{modInfo.longIdentifier}_{name.ToUpper()}_NAME";
+            loreToken = $"{modInfo.longIdentifier}_{name.ToUpper()}_LORE";
 
             CreatePrefab();
             SkillSetup();

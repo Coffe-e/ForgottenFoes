@@ -27,4 +27,3 @@ D:\All Coding Stuff\RoR2 Modding\MoreEnemies\obj\Debug\netstandard2.0\MoreMonste
 D:\All Coding Stuff\RoR2 Modding\MoreEnemies\obj\Debug\netstandard2.0\MoreMonsters.pdb
 D:\All Coding Stuff\RoR2 Modding\MoreEnemies\bin\Debug\netstandard2.0\Rewired_Core.dll
 D:\All Coding Stuff\RoR2 Modding\MoreEnemies\bin\Debug\netstandard2.0\Rewired_CSharp.dll
-D:\All Coding Stuff\RoR2 Modding\MoreEnemies\obj\Debug\netstandard2.0\MoreMonsters.csprojAssemblyReference.cache

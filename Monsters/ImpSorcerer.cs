@@ -405,11 +405,7 @@ namespace MoreMonsters
                 //PrefabAPI.InstantiateClone(eyes.transform.Find("Offset/Effect/mdlWoodSprite").gameObject, "Model", false).transform.SetParent(offsets[i], false);
 
 
-                //This is wispy stuff
-                PrefabAPI.InstantiateClone(Resources.Load<GameObject>("prefabs/effects/orbeffects/WispOrbEffect"), "Model", false).transform.SetParent(offsets[i], false);
-                UnityEngine.Object.Destroy(offsets[i].GetComponentInChildren<OrbEffect>());
-                UnityEngine.Object.Destroy(offsets[i].GetComponentInChildren<EffectComponent>());
-                UnityEngine.Object.Destroy(offsets[i].transform.Find("Model/Mesh").GetComponent<RotateAroundAxis>());
+                PrefabAPI.InstantiateClone(Resources.Load<GameObject>("prefabs/pickupmodels/PickupDiamond"), "Model", false).transform.SetParent(offsets[i], false);
             }
             UnityEngine.Object.Destroy(eyes.transform.Find("Offset").gameObject);
             #endregion

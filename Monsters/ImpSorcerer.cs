@@ -467,28 +467,34 @@ namespace MoreMonsters
             var crystals = PrefabAPI.InstantiateClone(Assets.mainAssetBundle.LoadAsset<GameObject>("CrystalFollower"), "Crystals", false);
             crystals.transform.SetParent(bodyPrefab.transform.Find("ModelBase/mdlImp"), false);
 
-
             Transform[] offsets = new Transform[] { crystals.transform.Find("Offset0"), crystals.transform.Find("Offset1"), crystals.transform.Find("Offset2") };
             for (int i = 0; i < offsets.Length; i++)
             {
-                offsets[i].SetParent(crystals.transform, true);
-
                 var diamond = PrefabAPI.InstantiateClone(Resources.Load<GameObject>("prefabs/pickupmodels/PickupDiamond"), "Model", false);
                 diamond.transform.SetParent(offsets[i], false);
+                diamond.transform.localPosition += new Vector3(0, 1);
+                diamond.transform.localScale *= 0.6f;
+                diamond.transform.localRotation = Quaternion.identity;
                 var rigidBody = diamond.AddComponent<Rigidbody>();
                 rigidBody.mass = 60f;
-                rigidBody.drag = 0.05f;
+                rigidBody.drag = 0.5f;
                 rigidBody.angularDrag = 0.02f;
+                rigidBody.isKinematic = true;
+                rigidBody.useGravity = false;
             }
+            #endregion
+
+            #region Rotation Constraint
+            ImpSorcererCrystalController.constraintPrefab = PrefabAPI.InstantiateClone(Assets.mainAssetBundle.LoadAsset<GameObject>("CrystalRotationController"), "ImpSorcererCrystalRotationController", true);
             #endregion
 
             #region Attack Crystals added
             MoreMonsters._logger.LogWarning("flag");
             var crystalClones = GameObject.Instantiate(bodyPrefab.transform.Find(deleteWhenYouGetModel + "/Crystals").gameObject); // When model is imported, change mdlImp to mdlImpSorcerer or else there will be a NRE!
-            crystalClones.name = "Attack Crystals";
+            //crystalClones.name = "Attack Crystals";
             crystalClones.AddComponent<NetworkIdentity>(); //networkidentity should default to server only(?)
             crystalClones.AddComponent<ImpSorcererCrystalAttackManager>();
-            PrefabAPI.RegisterNetworkPrefab(crystalClones);
+            crystalClones = PrefabAPI.InstantiateClone(crystalClones, "Attack Crystals", true);
             ImpSorcererCrystalController.clonePrefab = crystalClones;
             #endregion
 
@@ -708,11 +714,13 @@ namespace MoreMonsters
     public class ImpSorcererCrystalController : MonoBehaviour
     {
         public static GameObject clonePrefab;
+        public static GameObject constraintPrefab;
         public float rotationAngularVelocity = 30f;
         public float acceleration = 15f;
         public float damping = 0.3f;
         public bool enableSpringMotion = false;
         public GameObject parentBaseObject;
+        private Transform constraintObject;
         private Vector3 velocity = Vector3.zero;
         public MovementType movementType;
         public enum MovementType
@@ -726,13 +734,23 @@ namespace MoreMonsters
             while (nextParentUp.parent)
                 nextParentUp = nextParentUp.parent;
             parentBaseObject = nextParentUp.gameObject;
+
+            //Instantiates the constraint object
+            constraintObject = Instantiate(constraintPrefab.transform, Vector3.zero, Quaternion.identity);
+            var rotationConstraint = gameObject.GetComponent<RotationConstraint>();
+            var constraintSource = new ConstraintSource
+            {
+                sourceTransform = constraintObject,
+                weight = 1f
+            };
+            rotationConstraint.AddSource(constraintSource);
         }
 
         private void Update()
         {
             //UpdateMotion();
             //transform.position += velocity * Time.deltaTime;
-            UpdateRotation();
+            //UpdateRotation();
         }
 
         // This shit does not need to be implemented until the unique movement types are developed

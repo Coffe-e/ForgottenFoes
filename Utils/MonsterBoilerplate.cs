@@ -126,7 +126,7 @@ namespace MoreMonsters.Utils
                     {
                         if ((bool)args.newValue == true)
                             if (Run.instance != null && Run.instance.enabled) Chat.AddMessage($"<color=#{ColorCatalog.GetColorHexString(ColorCatalog.ColorIndex.Blood)}>{displayName}</color> has been <color=#aaffaa>ENABLED</color>. It will now spawn, and existing copies will start working again.");
-                        else
+                            else
                             if (Run.instance != null && Run.instance.enabled) Chat.AddMessage($"<color=#{ColorCatalog.GetColorHexString(ColorCatalog.ColorIndex.Blood)}>{displayName}</color> has been <color=#ffaaaa>DISABLED</color>. It will no longer spawn, and existing copies will stop working.");
                     }
                 }
@@ -143,7 +143,7 @@ namespace MoreMonsters.Utils
         public override void SetupAttributes()
         {
             base.SetupAttributes();
-            
+
             nameToken = $"{modInfo.longIdentifier}_{name.ToUpper()}_NAME";
             loreToken = $"{modInfo.longIdentifier}_{name.ToUpper()}_LORE";
 
@@ -162,7 +162,7 @@ namespace MoreMonsters.Utils
             };
 
             //Registers the entitystates
-            for(int i = 0; i < skillStates.Length; i++)
+            for (int i = 0; i < skillStates.Length; i++)
                 LoadoutAPI.AddSkill(skillStates[i]);
 
             //Makes a SpawnCard for the enemy

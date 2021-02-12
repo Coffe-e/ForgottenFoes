@@ -48,7 +48,6 @@ namespace MoreMonsters
         public override string nameTag => "ImpSorcerer";
         public override Type[] skillStates => new Type[]
         {
-            typeof(Fly),
             typeof(FireVoidCluster),
             typeof(SorcererBlinkState),
             typeof(EyeAttackState)
@@ -112,8 +111,8 @@ namespace MoreMonsters
 
             //GameObject model = CreateModel(bodyPrefab);
             //AddEyes();
-            AddCrystals();
-            AddProjectiles();
+            //AddCrystals();
+            //AddProjectiles();
             //All the other shit that needs to go here
 
         }
@@ -178,73 +177,6 @@ namespace MoreMonsters
             voidCluster.shouldTapButton = false;
             voidCluster.buttonPressType = AISkillDriver.ButtonPressType.Hold;
             #endregion
-            #region Fly
-            AISkillDriver fly = masterPrefab.AddComponent<AISkillDriver>();
-            fly.skillSlot = SkillSlot.Primary;
-            fly.requireSkillReady = true;
-            fly.requireEquipmentReady = false;
-            fly.nextHighPriorityOverride = voidCluster;
-            fly.requiredSkill = skillDefPrimary;
-            fly.moveTargetType = AISkillDriver.TargetType.Custom;
-            fly.minDistance = 0f;
-            fly.maxDistance = float.PositiveInfinity;
-            fly.selectionRequiresTargetLoS = false;
-            fly.activationRequiresTargetLoS = true;
-            fly.activationRequiresAimConfirmation = false;
-            fly.movementType = AISkillDriver.MovementType.StrafeMovetarget;
-            fly.aimType = AISkillDriver.AimType.AtMoveTarget;
-            fly.ignoreNodeGraph = true;
-            fly.shouldSprint = true;
-            fly.shouldFireEquipment = false;
-            fly.shouldTapButton = true;
-            #endregion
-        }
-        public override void PrimarySetup()
-        {
-            SkillLocator component = bodyPrefab.GetComponent<SkillLocator>();
-
-            LanguageAPI.Add("IMPSORCERER_PRIMARY_FLY_NAME", "Fly");
-            LanguageAPI.Add("IMPSORCERER_PRIMARY_FLY_DESCRIPTION", "");
-
-            // set up your primary skill def here!
-
-            skillDefPrimary = ScriptableObject.CreateInstance<SkillDef>();
-            skillDefPrimary.activationState = new SerializableEntityStateType(typeof(Fly));
-            skillDefPrimary.activationStateMachineName = "Body";
-            skillDefPrimary.baseMaxStock = 1;
-            skillDefPrimary.baseRechargeInterval = 10f;
-            skillDefPrimary.beginSkillCooldownOnSkillEnd = true;
-            skillDefPrimary.canceledFromSprinting = false;
-            skillDefPrimary.fullRestockOnAssign = true;
-            skillDefPrimary.interruptPriority = InterruptPriority.Death;
-            skillDefPrimary.isBullets = false;
-            skillDefPrimary.isCombatSkill = true;
-            skillDefPrimary.mustKeyPress = true;
-            skillDefPrimary.noSprint = true;
-            skillDefPrimary.rechargeStock = 1;
-            skillDefPrimary.requiredStock = 1;
-            skillDefPrimary.shootDelay = 0f;
-            skillDefPrimary.stockToConsume = 1;
-            skillDefPrimary.icon = null;
-            skillDefPrimary.skillDescriptionToken = "IMPSORCERER_PRIMARY_FLY_DESCRIPTION";
-            skillDefPrimary.skillName = "IMPSORCERER_PRIMARY_FLY_NAME";
-            skillDefPrimary.skillNameToken = "IMPSORCERER_PRIMARY_FLY_NAME";
-            LoadoutAPI.AddSkillDef(skillDefPrimary);
-
-            component.primary = bodyPrefab.AddComponent<GenericSkill>();
-            SkillFamily newFamily = ScriptableObject.CreateInstance<SkillFamily>();
-            newFamily.variants = new SkillFamily.Variant[1];
-            LoadoutAPI.AddSkillFamily(newFamily);
-            component.primary.SetFieldValue("_skillFamily", newFamily);
-            SkillFamily skillFamily = component.primary.skillFamily;
-
-            skillFamily.variants[0] = new SkillFamily.Variant
-            {
-                skillDef = skillDefPrimary,
-                unlockableName = "",
-                viewableNode = new ViewablesCatalog.Node(skillDefPrimary.skillNameToken, false, null)
-            };
-
         }
         public override void SecondarySetup()
         {
@@ -463,11 +395,19 @@ namespace MoreMonsters
         private void AddCrystals()
         {
             #region Stuff to be removed when model exists
-            MoreMonsters._logger.LogWarning("flag");
             var crystals = PrefabAPI.InstantiateClone(Assets.mainAssetBundle.LoadAsset<GameObject>("CrystalFollower"), "Crystals", false);
             crystals.transform.SetParent(bodyPrefab.transform.Find("ModelBase/mdlImp"), false);
+            crystals.transform.localPosition += new Vector3(0f, 1.2f);
+            #endregion
 
-            Transform[] offsets = new Transform[] { crystals.transform.Find("Offset0"), crystals.transform.Find("Offset1"), crystals.transform.Find("Offset2") };
+            #region Rotation Constraint
+            //ImpSorcererCrystalController.constraintPrefab = PrefabAPI.InstantiateClone(Assets.mainAssetBundle.LoadAsset<GameObject>("CrystalRotationController"), "ImpSorcererCrystalRotationController", true);
+            #endregion
+
+            #region Attack Crystals added
+            var crystalClones = GameObject.Instantiate(bodyPrefab.transform.Find(deleteWhenYouGetModel + "/Crystals").gameObject); // When model is imported, change mdlImp to mdlImpSorcerer or else there will be a NRE!
+
+            Transform[] offsets = new Transform[] { crystalClones.transform.Find("Offset0"), crystalClones.transform.Find("Offset1"), crystalClones.transform.Find("Offset2") };
             for (int i = 0; i < offsets.Length; i++)
             {
                 var diamond = PrefabAPI.InstantiateClone(Resources.Load<GameObject>("prefabs/pickupmodels/PickupDiamond"), "Model", false);
@@ -475,31 +415,25 @@ namespace MoreMonsters
                 diamond.transform.localPosition += new Vector3(0, 1);
                 diamond.transform.localScale *= 0.6f;
                 diamond.transform.localRotation = Quaternion.identity;
-                var rigidBody = diamond.AddComponent<Rigidbody>();
-                rigidBody.mass = 60f;
-                rigidBody.drag = 0.5f;
-                rigidBody.angularDrag = 0.02f;
+                var rigidBody = offsets[i].gameObject.AddComponent<Rigidbody>();
+                rigidBody.interpolation = RigidbodyInterpolation.Interpolate;
+                rigidBody.mass = 30f;
+                rigidBody.drag = 0.3f;
+                rigidBody.angularDrag = 0.2f;
+                rigidBody.maxAngularVelocity = 180f * 0.0174532924f;
                 rigidBody.isKinematic = true;
                 rigidBody.useGravity = false;
             }
-            #endregion
 
-            #region Rotation Constraint
-            ImpSorcererCrystalController.constraintPrefab = PrefabAPI.InstantiateClone(Assets.mainAssetBundle.LoadAsset<GameObject>("CrystalRotationController"), "ImpSorcererCrystalRotationController", true);
-            #endregion
-
-            #region Attack Crystals added
-            MoreMonsters._logger.LogWarning("flag");
-            var crystalClones = GameObject.Instantiate(bodyPrefab.transform.Find(deleteWhenYouGetModel + "/Crystals").gameObject); // When model is imported, change mdlImp to mdlImpSorcerer or else there will be a NRE!
-            //crystalClones.name = "Attack Crystals";
+            var attackManager = crystalClones.AddComponent<ImpSorcererCrystalAttackManager>();
+            attackManager.enabled = false;
+            crystalClones.AddComponent<ImpSorcererCrystalMovementManager>();
             crystalClones.AddComponent<NetworkIdentity>(); //networkidentity should default to server only(?)
-            crystalClones.AddComponent<ImpSorcererCrystalAttackManager>();
             crystalClones = PrefabAPI.InstantiateClone(crystalClones, "Attack Crystals", true);
             ImpSorcererCrystalController.clonePrefab = crystalClones;
             #endregion
 
             #region Adding Effects
-            MoreMonsters._logger.LogWarning("flag");
             var attackEffect = PrefabAPI.InstantiateClone(Resources.Load<GameObject>("prefabs/effects/ImpDeathEffect"), "ImpSorcererEyeAttackEffect", false);
 
             attackEffect.GetComponent<EffectComponent>().effectIndex = EffectIndex.Invalid;
@@ -638,7 +572,6 @@ namespace MoreMonsters
                 Destroy(gameObject);
         }
     }
-
     public class ProjectileSteerAboveTarget : MonoBehaviour
     {
         public bool yAxisOnly;
@@ -714,18 +647,22 @@ namespace MoreMonsters
     public class ImpSorcererCrystalController : MonoBehaviour
     {
         public static GameObject clonePrefab;
-        public static GameObject constraintPrefab;
         public float rotationAngularVelocity = 30f;
         public float acceleration = 15f;
         public float damping = 0.3f;
         public bool enableSpringMotion = false;
-        public GameObject parentBaseObject;
-        private Transform constraintObject;
+        private GameObject parentBaseObject;
+        private GameObject crystalClones;
+        private Transform constraint;
+        private ImpSorcererCrystalMovementManager movementManager;
+        private ImpSorcererCrystalAttackManager attackManager;
         private Vector3 velocity = Vector3.zero;
-        public MovementType movementType;
+        public MovementType movementType = MovementType.BasicFollowing;
         public enum MovementType
         {
             //This will contain all of the movement types that the crystals may have while doing stuff
+            BasicFollowing,
+            Attacking,
         }
         private void Start()
         {
@@ -735,12 +672,20 @@ namespace MoreMonsters
                 nextParentUp = nextParentUp.parent;
             parentBaseObject = nextParentUp.gameObject;
 
-            //Instantiates the constraint object
-            constraintObject = Instantiate(constraintPrefab.transform, Vector3.zero, Quaternion.identity);
+            crystalClones = Instantiate(clonePrefab, gameObject.transform.position, gameObject.transform.rotation);
+            movementManager = crystalClones.GetComponent<ImpSorcererCrystalMovementManager>();
+            attackManager = crystalClones.GetComponent<ImpSorcererCrystalAttackManager>();
+
+            movementManager.originalCrystalsObject = gameObject;
+
+
+
+            //Instantiates the constraint
+            constraint = new GameObject().transform;
             var rotationConstraint = gameObject.GetComponent<RotationConstraint>();
             var constraintSource = new ConstraintSource
             {
-                sourceTransform = constraintObject,
+                sourceTransform = constraint,
                 weight = 1f
             };
             rotationConstraint.AddSource(constraintSource);
@@ -750,7 +695,7 @@ namespace MoreMonsters
         {
             //UpdateMotion();
             //transform.position += velocity * Time.deltaTime;
-            //UpdateRotation();
+            UpdateRotation();
         }
 
         // This shit does not need to be implemented until the unique movement types are developed
@@ -777,31 +722,35 @@ namespace MoreMonsters
             switch (movementType)
             {
                 default:
-                    var aimRay = parentBaseObject.GetComponent<InputBankTest>().GetAimRay();
+                    /*var aimRay = parentBaseObject.GetComponent<InputBankTest>().GetAimRay();
                     for (int i = 0; i < 3; i++)
                     {
                         var offset = transform.Find("Offset" + i);
                         offset.forward = Vector3.RotateTowards(offset.forward, aimRay.direction, 180f * 0.0174532924f * Time.fixedDeltaTime, 0f);
                     }
-                    transform.rotation = Quaternion.AngleAxis(rotationAngularVelocity * Time.deltaTime, Vector3.up) * transform.rotation;
+                    transform.rotation = Quaternion.AngleAxis(rotationAngularVelocity * Time.deltaTime, Vector3.up) * transform.rotation;*/
+                    constraint.rotation = Quaternion.AngleAxis(rotationAngularVelocity * Time.deltaTime, Vector3.up) * constraint.rotation;
                     break;
             }
         }
 
         public void SetTarget(GameObject target, float attackSpeed, float attackInterval, float damage)
         {
-            GameObject crystalClones = Instantiate(clonePrefab, gameObject.transform.position, gameObject.transform.rotation);
-            var attackManager = crystalClones.GetComponent<ImpSorcererCrystalAttackManager>();
+            if (movementType == MovementType.Attacking)
+                return;
+            movementType = MovementType.Attacking;
+
             attackManager.ownerBodyObject = parentBaseObject;
             attackManager.targetBodyObject = target;
 
             attackManager.attackSpeed = attackSpeed;
             attackManager.attackInterval = attackInterval;
             attackManager.damage = damage;
-            gameObject.SetActive(false);
+
+            attackManager.enabled = true;
+            movementManager.enabled = false;
         }
     }
-
     public class ImpSorcererCrystalAttackManager : NetworkBehaviour
     {
         public static GameObject effectPrefab;
@@ -1077,8 +1026,65 @@ namespace MoreMonsters
             transform.position = ownerBodyObject.transform.position;
         }
     }
-}
+    public class ImpSorcererCrystalMovementManager : MonoBehaviour
+    {
+        public GameObject originalCrystalsObject;
+        public float rotationAngularVelocity = 30f;
+        public float acceleration = 20f;
+        public float damping = 0.3f;
+        public bool enableSpringMotion = false;
+        private Vector3 velocity = Vector3.zero;
+        private Transform[] crystals = new Transform[3];
+        private Rigidbody[] rigidBodies = new Rigidbody[3];
+        private Transform[] originalCrystals = new Transform[3];
+        private Vector3[] velocityOffsets = new Vector3[] { Vector3.zero, Vector3.zero, Vector3.zero };
 
+        private void Start()
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                var offset = gameObject.transform.Find("Offset" + i);
+                crystals[i] = offset;
+                rigidBodies[i] = offset.GetComponent<Rigidbody>();
+                originalCrystals[i] = originalCrystalsObject.transform.Find("Offset" + i);
+            }
+        }
+        private void Update()
+        {
+            if (!originalCrystalsObject)
+                Destroy(gameObject);
+        }
+        public void FixedUpdate()
+        {
+            //This is some janky ass code that makes it so this game object always stays with the original one while keeping its children at their position
+            /*transform.DetachChildren();
+            transform.position = originalCrystalsObject.transform.position;
+            transform.rotation = originalCrystalsObject.transform.rotation;
+            foreach (Transform crystal in crystals)
+                crystal.SetParent(transform, true);*/
+
+            UpdateMotion();
+            UpdateRotation();
+        }
+        private void UpdateMotion()
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                //crystals[i].localPosition = Vector3.SmoothDamp(crystals[i].localPosition, originalCrystalsObject.transform.Find("Offset" + i).localPosition, ref velocityOffsets[i], damping, 14f);
+                var position = (originalCrystals[i].position - rigidBodies[i].position) / 2f + rigidBodies[i].position;
+                rigidBodies[i].MovePosition(position);
+            }
+        }
+        private void UpdateRotation()
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                //crystals[i].forward = Vector3.RotateTowards(crystals[i].forward, originalCrystalsObject.transform.Find("Offset" + i).forward, 180f * 0.0174532924f * Time.fixedDeltaTime, 0f);
+                rigidBodies[i].MoveRotation(originalCrystals[i].rotation);
+            }
+        }
+    }
+}
 
 
 namespace MoreMonsters.States.ImpSorcerer
@@ -1095,83 +1101,6 @@ namespace MoreMonsters.States.ImpSorcerer
      * Layer 8: Idle, Additive
      * Layer 9: Blink, Additive
      */
-    public class Fly : BaseSkillState
-    {
-        public static float duration = 1f;
-        public static float launchSpeed = 8f;
-        //public static GameObject jumpEffectPrefab;
-        //public static string jumpEffectMuzzleString;
-        public ICharacterGravityParameterProvider characterGravityParameterProvider;
-        public ICharacterFlightParameterProvider characterFlightParameterProvider;
-        public float mecanimTransitionDuration;
-        public float flyOverrideMecanimLayerWeight;
-        public float movementSpeedMultiplier = 1.2f;
-        public string enterSoundString;
-        protected Animator animator;
-        protected int flyOverrideLayer;
-        public BaseAI baseAI;
-        public KinematicCharacterMotor kinematicCharacterMotor;
-
-        public override void OnEnter()
-        {
-            OnEnter();
-            animator = GetModelAnimator();
-            kinematicCharacterMotor = gameObject.GetComponent<KinematicCharacterMotor>();
-            characterGravityParameterProvider = gameObject.GetComponent<ICharacterGravityParameterProvider>();
-            characterFlightParameterProvider = gameObject.GetComponent<ICharacterFlightParameterProvider>();
-            baseAI = gameObject.GetComponent<BaseAI>();
-            if (animator)
-            {
-                flyOverrideLayer = animator.GetLayerIndex("FlyOverride");
-            }
-            if (characterMotor)
-            {
-                characterMotor.walkSpeedPenaltyCoefficient = movementSpeedMultiplier;
-            }
-            if (modelLocator)
-            {
-                modelLocator.normalizeToFloor = false;
-            }
-            characterGravityParameterProvider = gameObject.GetComponent<ICharacterGravityParameterProvider>();
-            characterFlightParameterProvider = gameObject.GetComponent<ICharacterFlightParameterProvider>();
-            if (characterGravityParameterProvider != null)
-            {
-                CharacterGravityParameters gravityParameters = characterGravityParameterProvider.gravityParameters;
-                gravityParameters.channeledAntiGravityGranterCount++;
-                characterGravityParameterProvider.gravityParameters = gravityParameters;
-            }
-            if (characterFlightParameterProvider != null)
-            {
-                CharacterFlightParameters flightParameters = characterFlightParameterProvider.flightParameters;
-                flightParameters.channeledFlightGranterCount++;
-                characterFlightParameterProvider.flightParameters = flightParameters;
-            }
-            if (characterMotor)
-            {
-                characterMotor.velocity.y = launchSpeed;
-                characterMotor.Motor.ForceUnground();
-            }
-            PlayAnimation("Body", "Jump");
-            //PlayAnimation("")
-            /*if (jumpEffectPrefab)
-            {
-                EffectManager.SimpleMuzzleFlash(jumpEffectPrefab, gameObject, jumpEffectMuzzleString, false);
-            }*/
-        }
-
-        public override void OnExit()
-        {
-            if (activatorSkillSlot)
-                activatorSkillSlot.SetSkillOverride(this, Resources.Load<SkillDef>("skilldefs/captainbody/CaptainSkillUsedUp"), GenericSkill.SkillOverridePriority.Replacement);
-            if (baseAI)
-                baseAI.PickCurrentNodeGraph();
-            /*if (kinematicCharacterMotor)
-                kinematicCharacterMotor._solveGrounding = false;*/
-            //outer.SetNextStateToMain();
-            OnExit();
-        }
-    }
-
     public class FireVoidCluster : BaseState
     {
         public static GameObject projectilePrefab;
@@ -1209,12 +1138,12 @@ namespace MoreMonsters.States.ImpSorcerer
             }
             if (isAuthority)
             {
-                ProjectileManager.instance.FireProjectile(projectilePrefab, aimRay.origin, Util.QuaternionSafeLookRotation(aimRay.direction), gameObject, this.damageStat * damageCoefficient, 0f, Util.CheckRoll(this.critStat, characterBody.master), DamageColorIndex.Default, null, -1f);
+                ProjectileManager.instance.FireProjectile(projectilePrefab, aimRay.origin, Util.QuaternionSafeLookRotation(aimRay.direction), gameObject, damageStat * damageCoefficient, 0f, Util.CheckRoll(critStat, characterBody.master), DamageColorIndex.Default, null, -1f);
             }
             if (characterBody)
             {
                 characterMotor.walkSpeedPenaltyCoefficient = 1f;
-                characterBody.SetAimTimer(this.duration + 2f);
+                characterBody.SetAimTimer(duration + 2f);
             }
         }
         public override void OnExit()
@@ -1227,7 +1156,7 @@ namespace MoreMonsters.States.ImpSorcerer
             FixedUpdate();
             if (fixedAge >= duration && isAuthority)
             {
-                this.outer.SetNextStateToMain();
+                outer.SetNextStateToMain();
                 return;
             }
         }
@@ -1355,7 +1284,6 @@ namespace MoreMonsters.States.ImpSorcerer
         public static float damageCoefficient = 4f;
         public static float procCoefficient;
         public static float selfForce;
-        public static float attackInterval = 3f;
         public static float forceMagnitude = 16f;
         public static GameObject hitEffectPrefab;
         public static GameObject swipeEffectPrefab;
@@ -1366,7 +1294,6 @@ namespace MoreMonsters.States.ImpSorcerer
         private float duration;
         private Transform modelTransform;
         private ImpSorcererCrystalController crystalController;
-        public static string deleteWhenYouGetModel = "ModelBase/mdlImp";
 
         public override void OnEnter()
         {
@@ -1378,7 +1305,7 @@ namespace MoreMonsters.States.ImpSorcerer
             StartAimMode(aimRay, 2f, false);
             characterMotor.walkSpeedPenaltyCoefficient = walkSpeedPenaltyCoefficient;
             //Util.PlayScaledSound(enterSoundString, gameObject, attackSpeedStat);
-            crystalController = gameObject.transform.Find(deleteWhenYouGetModel + "/Crystals").GetComponent<ImpSorcererCrystalController>();
+            crystalController = gameObject.GetComponent<ImpSorcererCrystalController>();
             if (modelAnimator)
             {
                 PlayAnimation("Gesture, Additive", "DoubleSlash", "DoubleSlash.playbackRate", duration);
@@ -1401,12 +1328,14 @@ namespace MoreMonsters.States.ImpSorcerer
                 bullseyeSearch.RefreshCandidates();
                 HurtBox hurtBox = bullseyeSearch.GetResults().FirstOrDefault<HurtBox>();
                 if (hurtBox)
-                    crystalController.SetTarget(hurtBox.healthComponent.body.gameObject, attackSpeedStat, attackInterval, damageStat * damageCoefficient);
+                {
+                    crystalController.SetTarget(hurtBox.healthComponent.body.gameObject, attackSpeedStat, baseDuration, damageStat * damageCoefficient);
+                }
             }
             if (characterBody)
             {
                 characterMotor.walkSpeedPenaltyCoefficient = 1f;
-                characterBody.SetAimTimer(this.duration + 2f);
+                characterBody.SetAimTimer(duration + 2f);
             }
         }
         public override void OnExit()
@@ -1419,7 +1348,7 @@ namespace MoreMonsters.States.ImpSorcerer
             FixedUpdate();
             if (fixedAge >= duration && isAuthority)
             {
-                this.outer.SetNextStateToMain();
+                outer.SetNextStateToMain();
                 return;
             }
         }

@@ -1,12 +1,11 @@
 ﻿using BepInEx;
 using EntityStates;
-using EntityStates.ImpMonster;
 using KinematicCharacterController;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using MoreMonsters;
-using MoreMonsters.States.ImpSorcerer;
+using MoreMonsters.States.ImpSorcererStates;
 using MoreMonsters.Utils;
 using R2API;
 using R2API.Utils;
@@ -54,7 +53,7 @@ namespace MoreMonsters
         };
         public override HullClassification hullSize => HullClassification.Human;
         public override MapNodeGroup.GraphType graphType => MapNodeGroup.GraphType.Air;
-        public override int creditCost => 51;
+        public override int creditCost => 27;
         public override bool occupyPosition => true;
         public override int selectionWeight => 1;
         public override DirectorCore.MonsterSpawnDistance spawnDistance => DirectorCore.MonsterSpawnDistance.Far;
@@ -66,7 +65,6 @@ namespace MoreMonsters
         protected override string GetLoreString(string langID = null) => "lol";
 
         protected private SerializableEntityStateType initialStateType;
-        SkillDef skillDefPrimary;
         SkillDef skillDefSecondary;
         SkillDef skillDefUtility;
         SkillDef skillDefSpecial;
@@ -86,7 +84,7 @@ namespace MoreMonsters
 
             IL.RoR2.Projectile.ProjectileImpactExplosion.FireChild -= IL_ProjectileImpactChildFix;
         }
-        ///<summary>Because the FireChild stuff was designed in a completely **FUCKING STUPID** WAY AND USES THE PROVIDED Z-OFFET FOR BOTH Y AND Z OF THE VECTOR... This injects some code to make it take the y offset instead.</summary>
+        ///<summary>Because the FireChild stuff was designed in a completely **FUCKING STUPID** WAY AND TAKES THE Z OFFETS FOR BOTH Y AND Z OF THE VECTOR... This injects some code to make it take the y offset</summary>
         private void IL_ProjectileImpactChildFix(ILContext il)
         {
             ILCursor c = new ILCursor(il);
@@ -109,12 +107,103 @@ namespace MoreMonsters
             cb.baseNameToken = "IMPSORCERER_BODY_NAME";
             cb.baseJumpCount = 0;
 
+            #region Potential Garbage
+            /*var fly = bodyPrefab.AddComponent<EntityStateMachine>();
+            fly.customName = "Flight";
+            fly.initialStateType = new SerializableEntityStateType(typeof(GenericCharacterMain));
+            fly.mainStateType = new SerializableEntityStateType(typeof(GenericCharacterMain));*/
+
+
+            /*var wispPrefab = Resources.Load<GameObject>("Prefabs/CharacterBodies/WispBody");
+
+            //Grabs the EntityStateMachine That needs to be manipulated
+            List<EntityStateMachine> bodyEntityStateMachines = new List<EntityStateMachine>();
+            bodyPrefab.GetComponents<EntityStateMachine>(bodyEntityStateMachines);
+            if (bodyEntityStateMachines[0].customName != "Body")
+                bodyEntityStateMachines.RemoveAt(0);
+
+            //Grabs the wisp EntityStateMachine the prefab one is being replaced with
+            List<EntityStateMachine> wispEntityStateMachines = new List<EntityStateMachine>();
+            wispPrefab.GetComponents<EntityStateMachine>(wispEntityStateMachines);
+            if (wispEntityStateMachines[0].customName != "Body")
+                wispEntityStateMachines.RemoveAt(0);
+
+            bodyEntityStateMachines[0].mainStateType = wispEntityStateMachines[0].mainStateType;
+
+            _______________________________________________________________________________*/
+
+            /*bodyPrefab = PrefabAPI.InstantiateClone(Resources.Load<GameObject>("Prefabs/CharacterBodies/BellBody"), "ImpSorcererBody");
+            var impPrefab = PrefabAPI.InstantiateClone(Resources.Load<GameObject>("Prefabs/CharacterBodies/ImpBody"), "ImpSorcererImpAssets");
+
+            List<EntityStateMachine> bodyEntityStateMachines = new List<EntityStateMachine>();
+            List<EntityStateMachine> impEntityStateMachines = new List<EntityStateMachine>();
+
+            //Replaces the modelbase for the bell with the imp one and adds other imp gameobjects
+            UnityEngine.Object.Destroy(bodyPrefab.transform.Find("mdlBell").gameObject);
+            impPrefab.transform.Find("mdlImp").SetParent(bodyPrefab.transform.Find("ModelBase"));
+            impPrefab.transform.Find("CameraPivot").SetParent(bodyPrefab.transform);
+            impPrefab.transform.Find("AimOrigin").SetParent(bodyPrefab.transform);
+
+            bodyPrefab.GetComponents<EntityStateMachine>(bodyEntityStateMachines);
+            impPrefab.GetComponents<EntityStateMachine>(impEntityStateMachines);
+            if(bodyEntityStateMachines[0].customName == "Body")
+            {
+                bodyEntityStateMachines[0].initialStateType = impEntityStateMachines[0].initialStateType;
+                bodyEntityStateMachines[1] = impEntityStateMachines[1];
+            }
+
+            UnityEngine.Object.Destroy(bodyPrefab.GetComponent<RigidbodyDirection>());
+            UnityEngine.Object.Destroy(bodyPrefab.GetComponent<RigidbodyMotor>());
+            var cpt0 = bodyPrefab.AddComponent<CharacterDirection>();
+            var cpt1 = bodyPrefab.AddComponent<CharacterMotor>();
+            var cpt2 = bodyPrefab.AddComponent<KinematicCharacterMotor>();
+            var cpt3 = bodyPrefab.GetComponent<CharacterBody>();
+            var cpt4 = bodyPrefab.GetComponent<CharacterDeathBehavior>();
+
+            cpt0 = impPrefab.GetComponent<CharacterDirection>();
+            cpt1 = impPrefab.GetComponent<CharacterMotor>();
+            cpt1.airControl = 1;
+            cpt1.isFlying = true;
+            cpt1.characterDirection = cpt0;k
+            cpt1.characterDirection = cpt0;k
+            cpt2 = impPrefab.GetComponent<KinematicCharacterMotor>();
+            cpt3 = impPrefab.GetComponent<CharacterBody>();
+            cpt1.body = cpt3;
+            cpt3.baseNameToken = "IMPSORCERER_BODY_NAME";
+            cpt4 = impPrefab.GetComponent<CharacterDeathBehavior>();*/
+
+
+            /*//Removes the BellArmature and replaces it with the Imp Armature
+            UnityEngine.Object.Destroy(bodyPrefab.transform.Find("BellArmature").gameObject);
+            impPrefab.transform.Find("ImpArmature").SetParent(bodyPrefab.transform.Find("mdlBell"));
+            //Removes the BellMesh and replaces it with the Imp Mesh
+            UnityEngine.Object.Destroy(bodyPrefab.transform.Find("BellMesh").gameObject);
+            impPrefab.transform.Find("ImpMesh").SetParent(bodyPrefab.transform.Find("mdlBell"));
+            //removes the aim assist from the bell and adds the imp one
+            UnityEngine.Object.Destroy(bodyPrefab.transform.Find("GameObject").gameObject);
+            impPrefab.transform.Find("AimAssist").SetParent(bodyPrefab.transform.Find("mdlBell"));*/
+
+
+
+
+            //var stateMachines = bodyPrefab.GetComponents<EntityStateMachine>();
+            #endregion
+
             //GameObject model = CreateModel(bodyPrefab);
-            //AddEyes();
-            //AddCrystals();
-            //AddProjectiles();
+            AddCrystals();
+            AddProjectiles();
             //All the other shit that needs to go here
 
+        }
+        public override void SkillSetup()
+        {
+            foreach (GenericSkill obj in bodyPrefab.GetComponentsInChildren<GenericSkill>())
+            {
+                BaseUnityPlugin.DestroyImmediate(obj);
+            }
+            SecondarySetup();
+            UtilitySetup();
+            SpecialSetup();
         }
         public override void CreateMaster()
         {
@@ -178,7 +267,7 @@ namespace MoreMonsters
             voidCluster.buttonPressType = AISkillDriver.ButtonPressType.Hold;
             #endregion
         }
-        public override void SecondarySetup()
+        private void SecondarySetup()
         {
             SkillLocator component = bodyPrefab.GetComponent<SkillLocator>();
 
@@ -226,7 +315,7 @@ namespace MoreMonsters
             };
 
         }
-        public override void UtilitySetup()
+        private void UtilitySetup()
         {
             SkillLocator component = bodyPrefab.GetComponent<SkillLocator>();
 
@@ -273,7 +362,7 @@ namespace MoreMonsters
                 viewableNode = new ViewablesCatalog.Node(skillDefUtility.skillNameToken, false, null)
             };
         }
-        public override void SpecialSetup()
+        private void SpecialSetup()
         {
             SkillLocator component = bodyPrefab.GetComponent<SkillLocator>();
 
@@ -320,78 +409,6 @@ namespace MoreMonsters
                 viewableNode = new ViewablesCatalog.Node(skillDefSpecial.skillNameToken, false, null)
             };
         }
-        /*private void AddEyes()
-        {
-            var eyesAssetBundle = PrefabAPI.InstantiateClone(Assets.mainAssetBundle.LoadAsset<GameObject>("EyeFollower"), "EyeFollowerAssetBundle", false);
-            eyes = PrefabAPI.InstantiateClone(Resources.Load<GameObject>("prefabs/networkedobjects/HealingFollower"), "ImpSorcererEyesFollower", true);
-
-            UnityEngine.Object.Destroy(eyes.GetComponent<HealingFollowerController>());
-            var eyeController = eyes.AddComponent<ImpSorcererEyeController>();
-            var addEyesComponent = bodyPrefab.AddComponent<EyeManager>();
-
-            #region Adding Offsets
-            eyes.transform.position = Vector3.zero;
-            Transform[] offsets = new Transform[] { eyesAssetBundle.transform.Find("Offset0"), eyesAssetBundle.transform.Find("Offset1"), eyesAssetBundle.transform.Find("Offset2") };
-            for (int i = 0; i < offsets.Length; i++)
-            {
-                offsets[i].SetParent(eyes.transform, true);
-                //PrefabAPI.InstantiateClone(eyes.transform.Find("Offset/Effect/mdlWoodSprite").gameObject, "Model", false).transform.SetParent(offsets[i], false);
-
-
-                PrefabAPI.InstantiateClone(Resources.Load<GameObject>("prefabs/pickupmodels/PickupDiamond"), "Model", false).transform.SetParent(offsets[i], false);
-            }
-            UnityEngine.Object.Destroy(eyes.transform.Find("Offset").gameObject);
-            #endregion
-
-            #region Indicator
-            UnityEngine.Object.Destroy(eyes.transform.Find("Indicator").gameObject);
-            var beetleGuardIndicator = PrefabAPI.InstantiateClone(Resources.Load<GameObject>("prefabs/characterbodies/BeetleGuardBody").transform.Find("ModelBase/mdlBeetleGuard/SlamZone/HitboxGroup/GroundSlamIndicator").gameObject, "Indicator", false);
-            beetleGuardIndicator.transform.SetParent(eyes.transform, false);
-            beetleGuardIndicator.transform.localScale *= 1.5f;
-            beetleGuardIndicator.transform.localPosition = Vector3.zero;
-            beetleGuardIndicator.GetComponent<MeshFilter>().mesh = Resources.Load<GameObject>("Prefabs/Projectiles/ImpVoidspikeProjectile").transform.Find("ImpactEffect/AreaIndicator").GetComponent<MeshFilter>().mesh;
-            beetleGuardIndicator.GetComponent<MeshRenderer>().material = Resources.Load<GameObject>("Prefabs/Projectiles/ImpVoidspikeProjectile").transform.Find("ImpactEffect/AreaIndicator").GetComponent<MeshRenderer>().material;
-            UnityEngine.Object.Destroy(beetleGuardIndicator.transform.Find("Arrow Holder").gameObject);
-            for (int i = 1; i < 8; i++)
-                UnityEngine.Object.Destroy(beetleGuardIndicator.transform.Find("Arrow Holder (" + i + ")").gameObject);
-            #endregion
-
-            #region Adding Effects
-            var eyeEffect = PrefabAPI.InstantiateClone(Resources.Load<GameObject>("prefabs/effects/ImpDeathEffect"), "ImpSorcererEyeAttackEffect", false);
-            //UnityEngine.Object.Destroy(eyeEffect.transform.Find("PP").gameObject);
-
-            eyeEffect.GetComponent<EffectComponent>().effectIndex = EffectIndex.Invalid;
-            eyeEffect.GetComponent<EffectComponent>().effectData = null;
-            eyeEffect.GetComponent<EffectComponent>().applyScale = true;
-            eyeEffect.GetComponent<VFXAttributes>().secondaryParticleSystem = null;
-            eyeEffect.transform.localScale = new Vector3(0.6f, 0.6f, 0.6f);
-
-            var particleSystems = eyeEffect.GetComponentsInChildren<ParticleSystem>();
-            foreach (ParticleSystem particleSystem in particleSystems)
-            {
-                var main = particleSystem.main;
-                main.simulationSpeed = 1.5f;
-            }
-
-            EffectAPI.AddEffect(eyeEffect);
-            #endregion
-
-            #region Defining stuff
-            eyeController.effectPrefab = eyeEffect;
-            eyeController.acceleration = 10f;
-            eyeController.rotationAngularVelocity = 30f;
-            eyeController.damage = 0.3f;
-            eyeController.enableSpringMotion = false;
-
-            eyeController.attackTelegraphTime = 2f;
-            eyeController.attackTelegraphStopMovingTime = 1.2f;
-            eyeController.attackTime = 2f;
-            eyeController.attackInterval = (eyeController.attackTime + eyeController.attackTelegraphTime + eyeController.attackTelegraphStopMovingTime);
-            eyeController.attackTimer = eyeController.attackInterval;
-            #endregion
-
-            addEyesComponent.eyes = eyes;
-        }*/
         private void AddCrystals()
         {
             #region Stuff to be removed when model exists
@@ -420,7 +437,7 @@ namespace MoreMonsters
                 rigidBody.mass = 30f;
                 rigidBody.drag = 0.3f;
                 rigidBody.angularDrag = 0.2f;
-                rigidBody.maxAngularVelocity = 180f * 0.0174532924f;
+                rigidBody.maxAngularVelocity = 180f * Mathf.Deg2Rad;
                 rigidBody.isKinematic = true;
                 rigidBody.useGravity = false;
             }
@@ -432,6 +449,8 @@ namespace MoreMonsters
             crystalClones = PrefabAPI.InstantiateClone(crystalClones, "Attack Crystals", true);
             ImpSorcererCrystalController.clonePrefab = crystalClones;
             #endregion
+
+            var crystalController = bodyPrefab.AddComponent<ImpSorcererCrystalController>();
 
             #region Adding Effects
             var attackEffect = PrefabAPI.InstantiateClone(Resources.Load<GameObject>("prefabs/effects/ImpDeathEffect"), "ImpSorcererEyeAttackEffect", false);
@@ -453,7 +472,6 @@ namespace MoreMonsters
             #endregion
 
 
-            var crystalController = crystals.AddComponent<ImpSorcererCrystalController>();
         }
         private void AddProjectiles()
         {
@@ -561,7 +579,6 @@ namespace MoreMonsters
             indicator.transform.position = gameObject.transform.position;
         }
     }
-
     public class DestroyIndicator : MonoBehaviour
     {
         public GameObject projectileObject;
@@ -606,8 +623,8 @@ namespace MoreMonsters
                     vector.y = 0f;
                 if (vector != Vector3.zero)
                 {
-                    transform.forward = Vector3.RotateTowards(transform.forward, vector, rotationSpeed * 0.0174532924f * Time.fixedDeltaTime, 0f);
-                    model.forward = Vector3.RotateTowards(model.forward, -vector, rotationSpeed * 0.0174532924f * Time.fixedDeltaTime, 0f);
+                    transform.forward = Vector3.RotateTowards(transform.forward, vector, rotationSpeed * Mathf.Deg2Rad * Time.fixedDeltaTime, 0f);
+                    model.forward = Vector3.RotateTowards(model.forward, -vector, rotationSpeed * Mathf.Deg2Rad * Time.fixedDeltaTime, 0f);
                 }
                 if (Mathf.Abs(vector.x) < 1f && Mathf.Abs(vector.z) < 1f && projectileSimple.velocity > 0.25f && vector.y > -1f)
                     projectileSimple.velocity -= 0.25f;
@@ -651,7 +668,7 @@ namespace MoreMonsters
         public float acceleration = 15f;
         public float damping = 0.3f;
         public bool enableSpringMotion = false;
-        private GameObject parentBaseObject;
+        private GameObject crystals;
         private GameObject crystalClones;
         private Transform constraint;
         private ImpSorcererCrystalMovementManager movementManager;
@@ -666,23 +683,18 @@ namespace MoreMonsters
         }
         private void Start()
         {
-            //This snippet of code just grabs the highest parent, which SHOULD be the body prefab
-            Transform nextParentUp = gameObject.transform.parent;
-            while (nextParentUp.parent)
-                nextParentUp = nextParentUp.parent;
-            parentBaseObject = nextParentUp.gameObject;
-
-            crystalClones = Instantiate(clonePrefab, gameObject.transform.position, gameObject.transform.rotation);
+            crystals = gameObject.transform.Find(ImpSorcerer.deleteWhenYouGetModel + "/Crystals").gameObject;
+            crystalClones = Instantiate(clonePrefab, crystals.transform.position, crystals.transform.rotation);
             movementManager = crystalClones.GetComponent<ImpSorcererCrystalMovementManager>();
             attackManager = crystalClones.GetComponent<ImpSorcererCrystalAttackManager>();
 
-            movementManager.originalCrystalsObject = gameObject;
+            movementManager.originalCrystalsObject = crystals;
 
 
 
             //Instantiates the constraint
             constraint = new GameObject().transform;
-            var rotationConstraint = gameObject.GetComponent<RotationConstraint>();
+            var rotationConstraint = crystals.GetComponent<RotationConstraint>();
             var constraintSource = new ConstraintSource
             {
                 sourceTransform = constraint,
@@ -701,7 +713,7 @@ namespace MoreMonsters
         // This shit does not need to be implemented until the unique movement types are developed
         /*private void UpdateMotion()
         {
-            Vector3 desiredPosition = gameObject.transform.parent.position;
+            Vector3 desiredPosition = crystals.transform.parent.position;
             if (enableSpringMotion)
             {
                 Vector3 lhs = desiredPosition - transform.position;
@@ -726,7 +738,7 @@ namespace MoreMonsters
                     for (int i = 0; i < 3; i++)
                     {
                         var offset = transform.Find("Offset" + i);
-                        offset.forward = Vector3.RotateTowards(offset.forward, aimRay.direction, 180f * 0.0174532924f * Time.fixedDeltaTime, 0f);
+                        offset.forward = Vector3.RotateTowards(offset.forward, aimRay.direction, 180f * Mathf.Deg2Rad * Time.fixedDeltaTime, 0f);
                     }
                     transform.rotation = Quaternion.AngleAxis(rotationAngularVelocity * Time.deltaTime, Vector3.up) * transform.rotation;*/
                     constraint.rotation = Quaternion.AngleAxis(rotationAngularVelocity * Time.deltaTime, Vector3.up) * constraint.rotation;
@@ -739,16 +751,17 @@ namespace MoreMonsters
             if (movementType == MovementType.Attacking)
                 return;
             movementType = MovementType.Attacking;
+            movementManager.enabled = false;
 
-            attackManager.ownerBodyObject = parentBaseObject;
+
+
+            attackManager.ownerBodyObject = gameObject;
             attackManager.targetBodyObject = target;
 
             attackManager.attackSpeed = attackSpeed;
             attackManager.attackInterval = attackInterval;
             attackManager.damage = damage;
-
             attackManager.enabled = true;
-            movementManager.enabled = false;
         }
     }
     public class ImpSorcererCrystalAttackManager : NetworkBehaviour
@@ -787,7 +800,7 @@ namespace MoreMonsters
         public float attackSpeed;
         public float attackInterval;
         public float damage;
-        public float rotationAngularVelocity;
+        public float rotationAngularVelocity = 30f;
         public float acceleration = 15f;
         public float damping = 0.3f;
         public bool enableSpringMotion = false;
@@ -795,23 +808,26 @@ namespace MoreMonsters
         // attack timer only starts ticking down once they get close enough to the target
         private float attackTimer = 0f;
         private float attackTime = 0.75f;
+        private bool isTelegraphing = false;
         private bool attacked = false;
         private bool hasDoneEffect = false;
+        private float angle = 2.0944f;
         private Vector3 velocity = Vector3.zero;
-        private Vector3 velocityOffsets = Vector3.zero;
         private Vector3 lastKnownPosition;
         private GameObject cachedTargetBodyObject;
         private HurtBox cachedTargetHurtBox;
+        private GameObject originalCrystalsObject;
+        private Transform[] crystals = new Transform[3];
+        private Rigidbody[] rigidBodies = new Rigidbody[3];
         private NetworkInstanceId ___ownerBodyObjectNetId;
         private NetworkInstanceId ___targetBodyObjectNetId;
-        private SubState subState = SubState.MovingToTarget;
-        public enum SubState
-        {
-            MovingToTarget,
-            TelegraphAttack,
-            MovingToOwner
-        }
 
+        private void Start()
+        {
+            originalCrystalsObject = GetComponent<ImpSorcererCrystalMovementManager>().originalCrystalsObject;
+            crystals = GetComponent<ImpSorcererCrystalMovementManager>().crystals;
+            rigidBodies = GetComponent<ImpSorcererCrystalMovementManager>().rigidBodies;
+        }
         private void FixedUpdate()
         {
             if (cachedTargetBodyObject != targetBodyObject)
@@ -821,33 +837,11 @@ namespace MoreMonsters
             }
             if (NetworkServer.active)
                 FixedUpdateServer();
-        }
-        public void FixedUpdateServer()
-        {
-            if (subState == SubState.TelegraphAttack)
-            {
-                attackTimer += Time.fixedDeltaTime;
-                if (attackTimer >= attackInterval)
-                    subState = SubState.MovingToOwner;
-                else
-                {
-                    if (attackTimer >= attackInterval * attackTime && attacked == false)
-                        DoAttack();
-                }
-            }
-            if (!ownerBodyObject)
-                Destroy(gameObject);
-            if (subState == SubState.MovingToOwner && transform.position == ownerBodyObject.transform.Find(ImpSorcerer.deleteWhenYouGetModel + "/Crystals").position)
-            {
-                ownerBodyObject.transform.Find(ImpSorcerer.deleteWhenYouGetModel + "/Crystals").gameObject.SetActive(true);
-                Destroy(gameObject);
-            }
-        }
-        public void Update()
-        {
+
             if (cachedTargetHurtBox)
                 lastKnownPosition = cachedTargetHurtBox.transform.position;
-            if (subState == SubState.TelegraphAttack)
+
+            if (isTelegraphing)
             {
                 if (hasDoneEffect == false)
                 {
@@ -869,65 +863,51 @@ namespace MoreMonsters
             {
                 UpdateMotion();
                 UpdateRotation();
-                if (Vector3.Distance(targetBodyObject.GetComponent<CharacterBody>().corePosition, transform.position) <= 0.1f)
+                if (Vector3.SqrMagnitude(lastKnownPosition - transform.position) <= 0.0001f)
                 {
-                    subState = SubState.TelegraphAttack;
+                    isTelegraphing = true;
                     velocity = Vector3.zero;
                 }
             }
         }
-        private void UpdateMotion()
+        public void FixedUpdateServer()
         {
-            if (subState == SubState.MovingToTarget)
+            if (isTelegraphing)
             {
-                Vector3 desiredPosition = GetDesiredPosition();
-                if (enableSpringMotion)
+                attackTimer += Time.fixedDeltaTime;
+                if (attackTimer >= attackInterval)
                 {
-                    Vector3 lhs = desiredPosition - transform.position;
-                    if (lhs != Vector3.zero)
-                    {
-                        Vector3 a = lhs.normalized * acceleration;
-                        Vector3 b = velocity * -damping;
-                        velocity += (a + b) * Time.deltaTime;
-                        return;
-                    }
+                    ownerBodyObject.GetComponent<ImpSorcererCrystalController>().movementType = ImpSorcererCrystalController.MovementType.BasicFollowing;
+                    GetComponent<ImpSorcererCrystalMovementManager>().enabled = true;
+                    ResetStats();
+                    enabled = false;
                 }
                 else
-                    transform.position = Vector3.SmoothDamp(transform.position, desiredPosition, ref velocity, damping, 14f);
-            }
-            else
-            {
-                transform.position = Vector3.SmoothDamp(transform.position, ownerBodyObject.transform.Find(ImpSorcerer.deleteWhenYouGetModel + "/Crystals").position, ref velocity, damping, 14f);
-                for (int i = 0; i < 3; i++)
                 {
-                    var offset = gameObject.transform.Find("Offset" + i);
-                    var tempVelocity = velocityOffsets;
-                    offset.localPosition = Vector3.SmoothDamp(offset.position, ownerBodyObject.transform.Find(ImpSorcerer.deleteWhenYouGetModel + "/Crystals/Offset" + i).localPosition, ref tempVelocity, damping, 14f);
-                    if (i == 2)
-                        velocityOffsets = tempVelocity;
+                    if (attackTimer >= attackInterval * attackTime && attacked == false)
+                        DoAttack();
                 }
             }
+            if (!ownerBodyObject)
+                Destroy(gameObject);
+        }
+        private void UpdateMotion()
+        {
+            Vector3 desiredPosition = GetDesiredPosition();
+            angle = (angle + rotationAngularVelocity * Mathf.Deg2Rad * Time.fixedDeltaTime) % (2f * Mathf.PI);
+            for (int i = 1; i < 4; i++)
+            {
+                rigidBodies[i - 1].MovePosition(transform.position + 2f * new Vector3(Mathf.Cos(angle * i), 0f, Mathf.Sin(angle * i)));
+            }
+            transform.position = Vector3.SmoothDamp(transform.position, desiredPosition, ref velocity, damping, 14f);
         }
         private void UpdateRotation()
         {
-            if (subState == SubState.MovingToTarget)
+            for (int i = 0; i < 3; i++)
             {
-                for (int i = 0; i < 3; i++)
-                {
-                    var offset = gameObject.transform.Find("Offset" + i);
-                    offset.forward = Vector3.RotateTowards(offset.forward, lastKnownPosition - offset.position, 180f * 0.0174532924f * Time.fixedDeltaTime, 0f);
-                }
-                transform.rotation = Quaternion.AngleAxis(rotationAngularVelocity * Time.deltaTime, Vector3.up) * transform.rotation;
+                crystals[i].forward = Vector3.RotateTowards(crystals[i].forward, lastKnownPosition - crystals[i].position, 180f * Mathf.Deg2Rad * Time.fixedDeltaTime, 0f);
             }
-            else
-            {
-                transform.rotation = Quaternion.AngleAxis(rotationAngularVelocity * Time.deltaTime, Vector3.up) * transform.rotation;
-                for (int i = 0; i < 3; i++)
-                {
-                    var offset = gameObject.transform.Find("Offset" + i);
-                    offset.forward = Vector3.RotateTowards(offset.forward, ownerBodyObject.transform.Find(ImpSorcerer.deleteWhenYouGetModel + "/Crystals/Offset" + i).forward, 180f * 0.0174532924f * Time.fixedDeltaTime, 0f);
-                }
-            }
+            transform.rotation = Quaternion.AngleAxis(rotationAngularVelocity * Time.deltaTime, Vector3.up) * transform.rotation;
         }
 
         [Server]
@@ -953,6 +933,15 @@ namespace MoreMonsters
         private Vector3 GetDesiredPosition()
         {
             return GetTargetPosition();
+        }
+        private void ResetStats()
+        {
+            attackTimer = 0f;
+            isTelegraphing = false;
+            attacked = false;
+            hasDoneEffect = false;
+            angle = 2.0944f;
+            velocity = Vector3.zero;
         }
         private void OnTargetChanged()
         {
@@ -1023,9 +1012,183 @@ namespace MoreMonsters
         public override void OnStartClient()
         {
             OnStartClient();
-            transform.position = ownerBodyObject.transform.position;
+            //sets the crystal parent object position/rotation to the original without changing the position of the other crystals
+            for (int i = 0; i < 3; i++)
+                crystals[i].SetParent(originalCrystalsObject.transform, true);
+            transform.position = originalCrystalsObject.transform.position;
+            transform.rotation = originalCrystalsObject.transform.rotation;
+            for (int i = 0; i < 3; i++)
+                crystals[i].SetParent(transform, true);
         }
     }
+
+    /*public class ImpSorcererCrystalAttackManager : MonoBehaviour
+    {
+        public static GameObject effectPrefab;
+        public GameObject ownerBodyObject;
+        public GameObject targetBodyObject;
+
+        // attackTime is what percent of the attack interval it is through when they attack. This just makes it easier to work with attack speeds.
+        public float attackSpeed;
+        public float attackInterval;
+        public float damage;
+        public float rotationAngularVelocity;
+        public float acceleration = 15f;
+        public float damping = 0.3f;
+        public bool enableSpringMotion = false;
+
+        // attack timer only starts ticking down once they get close enough to the target
+        private float attackTimer = 0f;
+        private float attackTime = 0.75f;
+        private bool isTelegraphing = false;
+        private bool attacked = false;
+        private bool hasDoneEffect = false;
+        private float angle = 2.0944f;
+        private Vector3 velocity = Vector3.zero;
+        private Vector3 lastKnownPosition;
+        private GameObject cachedTargetBodyObject;
+        private HurtBox cachedTargetHurtBox;
+        private GameObject originalCrystalsObject;
+        private Transform[] crystals = new Transform[3];
+        private Rigidbody[] rigidBodies = new Rigidbody[3];
+
+
+        private void Start()
+        {
+            originalCrystalsObject = GetComponent<ImpSorcererCrystalMovementManager>().originalCrystalsObject;
+            crystals = GetComponent<ImpSorcererCrystalMovementManager>().crystals;
+            rigidBodies = GetComponent<ImpSorcererCrystalMovementManager>().rigidBodies;
+
+            //sets the crystal parent object position/rotation to the original without changing the position of the other crystals
+            for (int i = 0; i < 3; i++)
+                crystals[i].SetParent(originalCrystalsObject.transform, true);
+            transform.position = originalCrystalsObject.transform.position;
+            transform.rotation = originalCrystalsObject.transform.rotation;
+            for (int i = 0; i < 3; i++)
+                crystals[i].SetParent(transform, true);
+        }
+
+        private void FixedUpdate()
+        {
+            if (cachedTargetBodyObject != targetBodyObject)
+            {
+                cachedTargetBodyObject = targetBodyObject;
+                OnTargetChanged();
+            }
+            if (NetworkServer.active)
+                FixedUpdateServer();
+
+            if (cachedTargetHurtBox)
+                lastKnownPosition = cachedTargetHurtBox.transform.position;
+            if (isTelegraphing)
+            {
+                if (hasDoneEffect == false)
+                {
+                    for (int i = 0; i < 3; i++)
+                    {
+                        var offset = transform.Find("Offset" + i);
+                        EffectData effectData = new EffectData
+                        {
+                            origin = offset.position,
+                            scale = 0.6f,
+                            rotation = Quaternion.Euler(90f, offset.eulerAngles.y, 0f)
+                        };
+                        EffectManager.SpawnEffect(effectPrefab, effectData, false);
+                        hasDoneEffect = true;
+                    }
+                }
+            }
+            else
+            {
+                UpdateMotion();
+                UpdateRotation();
+                if ((targetBodyObject.GetComponent<CharacterBody>().corePosition - transform.position).sqrMagnitude <= 0.01f)
+                {
+                    isTelegraphing = true;
+                    velocity = Vector3.zero;
+                }
+            }
+        }
+        public void FixedUpdateServer()
+        {
+            if (isTelegraphing)
+            {
+                attackTimer += Time.fixedDeltaTime;
+                if (attackTimer >= attackInterval)
+                {
+                    originalCrystalsObject.GetComponent<ImpSorcererCrystalController>().movementType = ImpSorcererCrystalController.MovementType.BasicFollowing;
+                    GetComponent<ImpSorcererCrystalMovementManager>().enabled = true;
+                    ResetStats();
+                    enabled = false;
+                }
+                else
+                {
+                    if (attackTimer >= attackInterval * attackTime && attacked == false)
+                        DoAttack();
+                }
+            }
+            if (!ownerBodyObject)
+                Destroy(gameObject);
+        }
+        private void UpdateMotion()
+        {
+            Vector3 desiredPosition = GetDesiredPosition();
+            angle = (angle + rotationAngularVelocity * Mathf.Deg2Rad * Time.fixedDeltaTime) % (2f * Mathf.PI);
+            for (int i = 1; i < 4; i++)
+            {
+
+                rigidBodies[i - 1].MovePosition(transform.position + 2f * new Vector3(Mathf.Cos(angle * i), 0f, Mathf.Sin(angle * i)));
+            }
+            transform.position = Vector3.SmoothDamp(transform.position, desiredPosition, ref velocity, damping, 14f);
+        }
+        private void UpdateRotation()
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                rigidBodies[i].MoveRotation(Quaternion.LookRotation(Vector3.RotateTowards(crystals[i].forward, lastKnownPosition - crystals[i].position, 180f * Mathf.Deg2Rad * Time.fixedDeltaTime, 0f)));
+            }
+            transform.rotation = Quaternion.AngleAxis(rotationAngularVelocity * Time.deltaTime, Vector3.up) * transform.rotation;
+        }
+
+        private void DoAttack()
+        {
+            attacked = true;
+            for (int i = 0; i < 3; i++)
+            {
+                var offset = gameObject.transform.Find("Offset" + i);
+                ProjectileManager.instance.FireProjectile(Resources.Load<GameObject>("prefabs/projectiles/GravekeeperHookProjectileSimple"), offset.position, Util.QuaternionSafeLookRotation(offset.forward), ownerBodyObject, damage, 0f, false, DamageColorIndex.Default);
+            }
+        }
+        private Vector3 GetTargetPosition()
+        {
+            GameObject gameObject = targetBodyObject;
+            if (!gameObject)
+                return lastKnownPosition;
+            CharacterBody component = gameObject.GetComponent<CharacterBody>();
+            if (!component)
+                return gameObject.transform.position;
+            return component.corePosition;
+        }
+        private Vector3 GetDesiredPosition()
+        {
+            return GetTargetPosition();
+        }
+        private void ResetStats()
+        {
+            attackTimer = 0f;
+            attackTime = 0.75f;
+            isTelegraphing = false;
+            attacked = false;
+            hasDoneEffect = false;
+            angle = 2.0944f;
+            velocity = Vector3.zero;
+        }
+        private void OnTargetChanged()
+        {
+            cachedTargetHurtBox = (cachedTargetBodyObject ? cachedTargetBodyObject.GetComponent<CharacterBody>().mainHurtBox : null);
+        }
+    }*/
+
     public class ImpSorcererCrystalMovementManager : MonoBehaviour
     {
         public GameObject originalCrystalsObject;
@@ -1034,10 +1197,9 @@ namespace MoreMonsters
         public float damping = 0.3f;
         public bool enableSpringMotion = false;
         private Vector3 velocity = Vector3.zero;
-        private Transform[] crystals = new Transform[3];
-        private Rigidbody[] rigidBodies = new Rigidbody[3];
-        private Transform[] originalCrystals = new Transform[3];
-        private Vector3[] velocityOffsets = new Vector3[] { Vector3.zero, Vector3.zero, Vector3.zero };
+        public Transform[] crystals = new Transform[3];
+        public Rigidbody[] rigidBodies = new Rigidbody[3];
+        public Transform[] originalCrystals = new Transform[3];
 
         private void Start()
         {
@@ -1068,18 +1230,21 @@ namespace MoreMonsters
         }
         private void UpdateMotion()
         {
+            var desiredPosition = (originalCrystalsObject.transform.position - gameObject.transform.position) / 1.2f + gameObject.transform.position;
+            transform.position = Vector3.SmoothDamp(transform.position, desiredPosition, ref velocity, damping, 14f);
             for (int i = 0; i < 3; i++)
             {
                 //crystals[i].localPosition = Vector3.SmoothDamp(crystals[i].localPosition, originalCrystalsObject.transform.Find("Offset" + i).localPosition, ref velocityOffsets[i], damping, 14f);
-                var position = (originalCrystals[i].position - rigidBodies[i].position) / 2f + rigidBodies[i].position;
+                var position = (originalCrystals[i].position - rigidBodies[i].position) / 1.2f + rigidBodies[i].position;
                 rigidBodies[i].MovePosition(position);
             }
         }
         private void UpdateRotation()
         {
+            gameObject.transform.forward = Vector3.RotateTowards(gameObject.transform.forward, originalCrystalsObject.transform.forward, 30f * Mathf.Deg2Rad * Time.fixedDeltaTime, 0f);
             for (int i = 0; i < 3; i++)
             {
-                //crystals[i].forward = Vector3.RotateTowards(crystals[i].forward, originalCrystalsObject.transform.Find("Offset" + i).forward, 180f * 0.0174532924f * Time.fixedDeltaTime, 0f);
+                //crystals[i].forward = Vector3.RotateTowards(crystals[i].forward, originalCrystalsObject.transform.Find("Offset" + i).forward, 180f * Mathf.Deg2Rad * Time.fixedDeltaTime, 0f);
                 rigidBodies[i].MoveRotation(originalCrystals[i].rotation);
             }
         }
@@ -1087,7 +1252,7 @@ namespace MoreMonsters
 }
 
 
-namespace MoreMonsters.States.ImpSorcerer
+namespace MoreMonsters.States.ImpSorcererStates
 {
     /*Imp has these animation layers:
      * Layer 0: Body
@@ -1101,6 +1266,7 @@ namespace MoreMonsters.States.ImpSorcerer
      * Layer 8: Idle, Additive
      * Layer 9: Blink, Additive
      */
+
     public class FireVoidCluster : BaseState
     {
         public static GameObject projectilePrefab;
@@ -1123,45 +1289,44 @@ namespace MoreMonsters.States.ImpSorcerer
 
         public override void OnEnter()
         {
-            OnEnter();
+            base.OnEnter();
             duration = baseDuration / attackSpeedStat;
-            modelAnimator = GetModelAnimator();
-            modelTransform = GetModelTransform();
-            Ray aimRay = GetAimRay();
-            StartAimMode(aimRay, 2f, false);
-            characterMotor.walkSpeedPenaltyCoefficient = walkSpeedPenaltyCoefficient;
-            //Util.PlayScaledSound(enterSoundString, gameObject, attackSpeedStat);
+            modelAnimator = base.GetModelAnimator();
+            modelTransform = base.GetModelTransform();
+            Ray aimRay = base.GetAimRay();
+            base.StartAimMode(aimRay, 2f, false);
+            base.characterMotor.walkSpeedPenaltyCoefficient = walkSpeedPenaltyCoefficient;
+            //Util.PlayScaledSound(enterSoundString, base.gameObject, attackSpeedStat);
             if (modelAnimator)
             {
-                PlayAnimation("Gesture, Additive", "DoubleSlash", "DoubleSlash.playbackRate", duration);
-                PlayAnimation("Gesture, Override", "DoubleSlash", "DoubleSlash.playbackRate", duration);
+                base.PlayAnimation("Gesture, Additive", "DoubleSlash", "DoubleSlash.playbackRate", duration);
+                base.PlayAnimation("Gesture, Override", "DoubleSlash", "DoubleSlash.playbackRate", duration);
             }
-            if (isAuthority)
+            if (base.isAuthority)
             {
-                ProjectileManager.instance.FireProjectile(projectilePrefab, aimRay.origin, Util.QuaternionSafeLookRotation(aimRay.direction), gameObject, damageStat * damageCoefficient, 0f, Util.CheckRoll(critStat, characterBody.master), DamageColorIndex.Default, null, -1f);
+                ProjectileManager.instance.FireProjectile(projectilePrefab, aimRay.origin, Util.QuaternionSafeLookRotation(aimRay.direction), base.gameObject, this.damageStat * damageCoefficient, 0f, Util.CheckRoll(this.critStat, base.characterBody.master), DamageColorIndex.Default, null, -1f);
             }
-            if (characterBody)
+            if (base.characterBody)
             {
-                characterMotor.walkSpeedPenaltyCoefficient = 1f;
-                characterBody.SetAimTimer(duration + 2f);
+                base.characterMotor.walkSpeedPenaltyCoefficient = 1f;
+                base.characterBody.SetAimTimer(this.duration + 2f);
             }
         }
         public override void OnExit()
         {
-            OnExit();
+            base.OnExit();
         }
 
         public override void FixedUpdate()
         {
-            FixedUpdate();
-            if (fixedAge >= duration && isAuthority)
+            base.FixedUpdate();
+            if (base.fixedAge >= duration && base.isAuthority)
             {
-                outer.SetNextStateToMain();
+                this.outer.SetNextStateToMain();
                 return;
             }
         }
     }
-
     public class SorcererBlinkState : BaseState
     {
         private Transform modelTransform;
@@ -1180,9 +1345,9 @@ namespace MoreMonsters.States.ImpSorcerer
 
         public override void OnEnter()
         {
-            OnEnter();
-            Util.PlaySound(SorcererBlinkState.beginSoundString, gameObject);
-            modelTransform = GetModelTransform();
+            base.OnEnter();
+            Util.PlaySound(SorcererBlinkState.beginSoundString, base.gameObject);
+            modelTransform = base.GetModelTransform();
             if (modelTransform)
             {
                 animator = modelTransform.GetComponent<Animator>();
@@ -1199,18 +1364,18 @@ namespace MoreMonsters.States.ImpSorcerer
                 int hurtBoxesDeactivatorCounter = hurtBoxGroup.hurtBoxesDeactivatorCounter + 1;
                 hurtBoxGroup.hurtBoxesDeactivatorCounter = hurtBoxesDeactivatorCounter;
             }
-            if (characterMotor)
+            if (base.characterMotor)
             {
-                characterMotor.enabled = false;
+                base.characterMotor.enabled = false;
             }
-            Vector3 b = inputBank.moveVector * SorcererBlinkState.blinkDistance;
-            blinkDestination = transform.position;
-            blinkStart = transform.position;
+            Vector3 b = base.inputBank.moveVector * SorcererBlinkState.blinkDistance;
+            blinkDestination = base.transform.position;
+            blinkStart = base.transform.position;
             NodeGraph groundNodes = SceneInfo.instance.airNodes;
-            NodeGraph.NodeIndex nodeIndex = groundNodes.FindClosestNode(transform.position + b, characterBody.hullClassification);
+            NodeGraph.NodeIndex nodeIndex = groundNodes.FindClosestNode(base.transform.position + b, base.characterBody.hullClassification);
             groundNodes.GetNodePosition(nodeIndex, out blinkDestination);
-            blinkDestination += transform.position - characterBody.footPosition;
-            CreateBlinkEffect(Util.GetCorePosition(gameObject));
+            blinkDestination += base.transform.position - base.characterBody.footPosition;
+            CreateBlinkEffect(Util.GetCorePosition(base.gameObject));
         }
 
         private void CreateBlinkEffect(Vector3 origin)
@@ -1223,22 +1388,22 @@ namespace MoreMonsters.States.ImpSorcerer
 
         private void SetPosition(Vector3 newPosition)
         {
-            if (characterMotor)
+            if (base.characterMotor)
             {
-                characterMotor.Motor.SetPositionAndRotation(newPosition, Quaternion.identity, true);
+                base.characterMotor.Motor.SetPositionAndRotation(newPosition, Quaternion.identity, true);
             }
         }
 
         public override void FixedUpdate()
         {
-            FixedUpdate();
+            base.FixedUpdate();
             stopwatch += Time.fixedDeltaTime;
-            if (characterMotor && characterDirection)
+            if (base.characterMotor && base.characterDirection)
             {
-                characterMotor.velocity = Vector3.zero;
+                base.characterMotor.velocity = Vector3.zero;
             }
             SetPosition(Vector3.Lerp(blinkStart, blinkDestination, stopwatch / SorcererBlinkState.duration));
-            if (stopwatch >= SorcererBlinkState.duration && isAuthority)
+            if (stopwatch >= SorcererBlinkState.duration && base.isAuthority)
             {
                 outer.SetNextStateToMain();
             }
@@ -1246,9 +1411,9 @@ namespace MoreMonsters.States.ImpSorcerer
 
         public override void OnExit()
         {
-            Util.PlaySound(SorcererBlinkState.endSoundString, gameObject);
-            CreateBlinkEffect(Util.GetCorePosition(gameObject));
-            modelTransform = GetModelTransform();
+            Util.PlaySound(SorcererBlinkState.endSoundString, base.gameObject);
+            CreateBlinkEffect(Util.GetCorePosition(base.gameObject));
+            modelTransform = base.GetModelTransform();
             if (modelTransform && SorcererBlinkState.destealthMaterial)
             {
                 TemporaryOverlay temporaryOverlay = animator.gameObject.AddComponent<TemporaryOverlay>();
@@ -1269,17 +1434,18 @@ namespace MoreMonsters.States.ImpSorcerer
                 int hurtBoxesDeactivatorCounter = hurtBoxGroup.hurtBoxesDeactivatorCounter - 1;
                 hurtBoxGroup.hurtBoxesDeactivatorCounter = hurtBoxesDeactivatorCounter;
             }
-            if (characterMotor)
+            if (base.characterMotor)
             {
-                characterMotor.enabled = true;
+                base.characterMotor.enabled = true;
             }
-            PlayAnimation("Gesture, Additive", "BlinkEnd");
-            OnExit();
+            base.PlayAnimation("Gesture, Additive", "BlinkEnd");
+            base.OnExit();
         }
     }
-
     public class EyeAttackState : BaseState
     {
+        public static GameObject projectilePrefab;
+        public static GameObject effectPrefab;
         public static float baseDuration = 3.5f;
         public static float damageCoefficient = 4f;
         public static float procCoefficient;
@@ -1292,26 +1458,26 @@ namespace MoreMonsters.States.ImpSorcerer
         public static float walkSpeedPenaltyCoefficient;
         private Animator modelAnimator;
         private float duration;
+        private int slashCount;
         private Transform modelTransform;
-        private ImpSorcererCrystalController crystalController;
+
 
         public override void OnEnter()
         {
-            OnEnter();
+            base.OnEnter();
             duration = baseDuration / attackSpeedStat;
-            modelAnimator = GetModelAnimator();
-            modelTransform = GetModelTransform();
-            Ray aimRay = GetAimRay();
-            StartAimMode(aimRay, 2f, false);
-            characterMotor.walkSpeedPenaltyCoefficient = walkSpeedPenaltyCoefficient;
-            //Util.PlayScaledSound(enterSoundString, gameObject, attackSpeedStat);
-            crystalController = gameObject.GetComponent<ImpSorcererCrystalController>();
+            modelAnimator = base.GetModelAnimator();
+            modelTransform = base.GetModelTransform();
+            Ray aimRay = base.GetAimRay();
+            base.StartAimMode(aimRay, 2f, false);
+            base.characterMotor.walkSpeedPenaltyCoefficient = walkSpeedPenaltyCoefficient;
+            //Util.PlayScaledSound(enterSoundString, base.gameObject, attackSpeedStat);
             if (modelAnimator)
             {
-                PlayAnimation("Gesture, Additive", "DoubleSlash", "DoubleSlash.playbackRate", duration);
-                PlayAnimation("Gesture, Override", "DoubleSlash", "DoubleSlash.playbackRate", duration);
+                base.PlayAnimation("Gesture, Additive", "DoubleSlash", "DoubleSlash.playbackRate", duration);
+                base.PlayAnimation("Gesture, Override", "DoubleSlash", "DoubleSlash.playbackRate", duration);
             }
-            if (isAuthority && NetworkServer.active)
+            if (base.isAuthority)
             {
                 BullseyeSearch bullseyeSearch = new BullseyeSearch();
                 bullseyeSearch.teamMaskFilter = TeamMask.allButNeutral;
@@ -1323,35 +1489,34 @@ namespace MoreMonsters.States.ImpSorcerer
                 bullseyeSearch.maxAngleFilter = 100f;
                 bullseyeSearch.searchOrigin = aimRay.origin;
                 bullseyeSearch.searchDirection = aimRay.direction;
-                bullseyeSearch.filterByLoS = false;
+                bullseyeSearch.filterByLoS = true;
                 bullseyeSearch.sortMode = BullseyeSearch.SortMode.Angle;
                 bullseyeSearch.RefreshCandidates();
                 HurtBox hurtBox = bullseyeSearch.GetResults().FirstOrDefault<HurtBox>();
                 if (hurtBox)
                 {
-                    crystalController.SetTarget(hurtBox.healthComponent.body.gameObject, attackSpeedStat, baseDuration, damageStat * damageCoefficient);
+                    gameObject.GetComponent<ImpSorcererCrystalController>().SetTarget(hurtBox.healthComponent.body.gameObject, attackSpeedStat, duration, damageStat * damageCoefficient);
                 }
             }
-            if (characterBody)
+            if (base.characterBody)
             {
-                characterMotor.walkSpeedPenaltyCoefficient = 1f;
-                characterBody.SetAimTimer(duration + 2f);
+                base.characterMotor.walkSpeedPenaltyCoefficient = 1f;
+                base.characterBody.SetAimTimer(this.duration + 2f);
             }
         }
         public override void OnExit()
         {
-            OnExit();
+            base.OnExit();
         }
 
         public override void FixedUpdate()
         {
-            FixedUpdate();
-            if (fixedAge >= duration && isAuthority)
+            base.FixedUpdate();
+            if (base.fixedAge >= duration && base.isAuthority)
             {
-                outer.SetNextStateToMain();
+                this.outer.SetNextStateToMain();
                 return;
             }
         }
-
     }
 }

@@ -79,37 +79,25 @@ namespace MoreMonsters.Utils
 
 
 
-        ///<summary>Creates the prefab for the monster.</summary>
+///<summary>Creates the prefab for the monster.</summary>
         public abstract void CreatePrefab();
 
         ///<summary>Replaces the old model with a new one.</summary>
         public virtual GameObject CreateModel(GameObject main)
         {
+            UnityEngine.Object.Destroy(main.transform.Find("Model Base").gameObject);
             UnityEngine.Object.Destroy(main.transform.Find("ModelBase").gameObject);
             UnityEngine.Object.Destroy(main.transform.Find("CameraPivot").gameObject);
             UnityEngine.Object.Destroy(main.transform.Find("AimOrigin").gameObject);
 
-            GameObject model = null; //Assets.mainAssetBundle.LoadAsset<GameObject>("mdl" + nameTag); //Change this to the monster's model
+            GameObject model = Assets.mainAssetBundle.LoadAsset<GameObject>("mdl" + nameTag); //Change this to the monster's model
             return model;
         }
 
         ///<summary>Adds skills to a bodyPrefab. Should normally be called by CreatePrefab()</summary>
         public virtual void SkillSetup()
         {
-            foreach (GenericSkill obj in bodyPrefab.GetComponentsInChildren<GenericSkill>())
-                BaseUnityPlugin.DestroyImmediate(obj);
-            PrimarySetup();
-            SecondarySetup();
-            UtilitySetup();
-            SpecialSetup();
-            PassiveSetup();
         }
-
-        public virtual void PrimarySetup() { }
-        public virtual void SecondarySetup() { }
-        public virtual void UtilitySetup() { }
-        public virtual void SpecialSetup() { }
-        public virtual void PassiveSetup() { }
 
         ///<summary>Registers entity states, like skills.</summary>
         public abstract void CreateMaster();
@@ -125,9 +113,13 @@ namespace MoreMonsters.Utils
                     if (args.oldValue != args.newValue)
                     {
                         if ((bool)args.newValue == true)
+                        {
                             if (Run.instance != null && Run.instance.enabled) Chat.AddMessage($"<color=#{ColorCatalog.GetColorHexString(ColorCatalog.ColorIndex.Blood)}>{displayName}</color> has been <color=#aaffaa>ENABLED</color>. It will now spawn, and existing copies will start working again.");
-                            else
+                        }
+                        else
+                        {
                             if (Run.instance != null && Run.instance.enabled) Chat.AddMessage($"<color=#{ColorCatalog.GetColorHexString(ColorCatalog.ColorIndex.Blood)}>{displayName}</color> has been <color=#ffaaaa>DISABLED</color>. It will no longer spawn, and existing copies will stop working.");
+                        }
                     }
                 }
             };
@@ -143,15 +135,21 @@ namespace MoreMonsters.Utils
         public override void SetupAttributes()
         {
             base.SetupAttributes();
-
+            
+            //These current have no use, I can probably do something with them
             nameToken = $"{modInfo.longIdentifier}_{name.ToUpper()}_NAME";
             loreToken = $"{modInfo.longIdentifier}_{name.ToUpper()}_LORE";
 
             CreatePrefab();
             SkillSetup();
+
+            //Registers the entitystates
+            for(int i = 0; i < skillStates.Length; i++)
+                LoadoutAPI.AddSkill(skillStates[i]);
+
             CreateMaster();
 
-            //Adds the bodyPrefab and masterPrefab to the entry list
+            //adds the bodyPrefab and masterPrefab to the entry list
             BodyCatalog.getAdditionalEntries += delegate (List<GameObject> list)
             {
                 list.Add(bodyPrefab);
@@ -160,10 +158,6 @@ namespace MoreMonsters.Utils
             {
                 list.Add(masterPrefab);
             };
-
-            //Registers the entitystates
-            for (int i = 0; i < skillStates.Length; i++)
-                LoadoutAPI.AddSkill(skillStates[i]);
 
             //Makes a SpawnCard for the enemy
             CharacterSpawnCard spawnCard1 = ScriptableObject.CreateInstance<CharacterSpawnCard>();

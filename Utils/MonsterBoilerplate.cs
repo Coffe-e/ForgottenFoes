@@ -8,6 +8,8 @@ using System.Text;
 using TILER2;
 using UnityEngine;
 using static TILER2.MiscUtil;
+using RoR2.Skills;
+using R2API.Utils;
 
 namespace MoreMonsters.Utils
 {
@@ -39,8 +41,11 @@ namespace MoreMonsters.Utils
         ///<summary>The standard named used in files without any prefixes. If the names for these files are not consistent, there may be null references.</summary>
         public abstract string nameTag { get; }
 
-        ///<summary>Skillstates to be registered should be here.</summary>
-        public abstract Type[] skillStates { get; }
+        ///<summary>entity states to be registered should be here.</summary>
+        public abstract Type[] entityStates { get; }
+
+        ///<summary>All SkillDefs for this monster should be inside this array. The first parameter corresponds to the skill slot (primary, secondary, utility, special, passive), the second parameter is optional for skill families. If you need more than 4 slots in a monster skill family, you are likely a madman.</summary>
+        public SkillDef[,] skillDefs = new SkillDef[5, 5];
 
         ///<summary>How big the monster is.</summary>
         public abstract HullClassification hullSize { get; }
@@ -79,25 +84,26 @@ namespace MoreMonsters.Utils
 
 
 
-///<summary>Creates the prefab for the monster.</summary>
+        ///<summary>Creates the prefab for the monster.</summary>
         public abstract void CreatePrefab();
 
-        ///<summary>Replaces the old model with a new one.</summary>
-        public virtual GameObject CreateModel(GameObject main)
-        {
-            UnityEngine.Object.Destroy(main.transform.Find("Model Base").gameObject);
-            UnityEngine.Object.Destroy(main.transform.Find("ModelBase").gameObject);
-            UnityEngine.Object.Destroy(main.transform.Find("CameraPivot").gameObject);
-            UnityEngine.Object.Destroy(main.transform.Find("AimOrigin").gameObject);
-
-            GameObject model = Assets.mainAssetBundle.LoadAsset<GameObject>("mdl" + nameTag); //Change this to the monster's model
-            return model;
-        }
-
-        ///<summary>Adds skills to a bodyPrefab. Should normally be called by CreatePrefab()</summary>
+        ///<summary>Sets up skills. Need I say more?</summary>
         public virtual void SkillSetup()
         {
+            foreach (GenericSkill obj in bodyPrefab.GetComponentsInChildren<GenericSkill>())
+                BaseUnityPlugin.DestroyImmediate(obj);
+            PrimarySetup();
+            SecondarySetup();
+            UtilitySetup();
+            SpecialSetup();
+            PassiveSetup();
         }
+
+        public virtual void PrimarySetup() { }
+        public virtual void SecondarySetup() { }
+        public virtual void UtilitySetup() { }
+        public virtual void SpecialSetup() { }
+        public virtual void PassiveSetup() { }
 
         ///<summary>Registers entity states, like skills.</summary>
         public abstract void CreateMaster();
@@ -135,18 +141,13 @@ namespace MoreMonsters.Utils
         public override void SetupAttributes()
         {
             base.SetupAttributes();
-            
+
             //These current have no use, I can probably do something with them
             nameToken = $"{modInfo.longIdentifier}_{name.ToUpper()}_NAME";
             loreToken = $"{modInfo.longIdentifier}_{name.ToUpper()}_LORE";
 
             CreatePrefab();
-            SkillSetup();
-
-            //Registers the entitystates
-            for(int i = 0; i < skillStates.Length; i++)
-                LoadoutAPI.AddSkill(skillStates[i]);
-
+            RegisterSkills();
             CreateMaster();
 
             //adds the bodyPrefab and masterPrefab to the entry list
@@ -192,9 +193,68 @@ namespace MoreMonsters.Utils
                 DirectorAPI.Helpers.AddNewMonster(directorCard, monsterCategory);
         }
 
+        public void RegisterSkills()
+        {
+            //Registers the entitystates
+            for (int i = 0; i < entityStates.Length; i++)
+                LoadoutAPI.AddSkill(entityStates[i]);
+
+            SkillSetup();
+            SkillLocator component = bodyPrefab.GetComponent<SkillLocator>();
+            for (int k = 0; k < 4; k++)
+            {
+                if (skillDefs[k, 0] == null)
+                    continue;
+
+
+                SkillFamily newFamily = ScriptableObject.CreateInstance<SkillFamily>();
+                var skillVariants = new List<SkillFamily.Variant>();
+
+                for (int i = 0; i < 4; i++)
+                {
+                    if (skillDefs[k, i] == null)
+                        break;
+
+                    LoadoutAPI.AddSkillDef(skillDefs[k, i]);
+                    LanguageAPI.Add(skillDefs[k, i].skillNameToken, "");
+                    LanguageAPI.Add(skillDefs[k, i].skillDescriptionToken, "");
+
+                    skillVariants.Add(new SkillFamily.Variant
+                    {
+                        skillDef = skillDefs[k, i],
+                        unlockableName = "",
+                        viewableNode = new ViewablesCatalog.Node(skillDefs[k, i].skillNameToken, false, null)
+                    });
+                }
+                newFamily.variants = skillVariants.ToArray();
+                LoadoutAPI.AddSkillFamily(newFamily);
+                SkillFamily skillFamily;
+                switch (k)
+                {
+                    case 0:
+                        component.primary = bodyPrefab.AddComponent<GenericSkill>();
+                        component.primary.SetFieldValue("_skillFamily", newFamily);
+                        break;
+                    case 1:
+                        component.secondary = bodyPrefab.AddComponent<GenericSkill>();
+                        component.secondary.SetFieldValue("_skillFamily", newFamily);
+                        break;
+                    case 2:
+                        component.utility = bodyPrefab.AddComponent<GenericSkill>();
+                        component.utility.SetFieldValue("_skillFamily", newFamily);
+                        break;
+                    default:
+                        component.special = bodyPrefab.AddComponent<GenericSkill>();
+                        component.special.SetFieldValue("_skillFamily", newFamily);
+                        break;
+                }
+            }
+        }
+
         public override void SetupLate()
         {
             base.SetupLate();
         }
     }
+
 }

@@ -7,6 +7,8 @@ D:\All Coding Stuff\RoR2 Modding\MoreEnemies\bin\Debug\netstandard2.0\MMHOOK_Ass
 D:\All Coding Stuff\RoR2 Modding\MoreEnemies\bin\Debug\netstandard2.0\Mono.Cecil.dll
 D:\All Coding Stuff\RoR2 Modding\MoreEnemies\bin\Debug\netstandard2.0\MonoMod.Utils.dll
 D:\All Coding Stuff\RoR2 Modding\MoreEnemies\bin\Debug\netstandard2.0\R2API.dll
+D:\All Coding Stuff\RoR2 Modding\MoreEnemies\bin\Debug\netstandard2.0\Rewired_Core.dll
+D:\All Coding Stuff\RoR2 Modding\MoreEnemies\bin\Debug\netstandard2.0\Rewired_CSharp.dll
 D:\All Coding Stuff\RoR2 Modding\MoreEnemies\bin\Debug\netstandard2.0\ShareSuite.dll
 D:\All Coding Stuff\RoR2 Modding\MoreEnemies\bin\Debug\netstandard2.0\TILER2.dll
 D:\All Coding Stuff\RoR2 Modding\MoreEnemies\bin\Debug\netstandard2.0\Unity.Postprocessing.Runtime.dll
@@ -25,6 +27,3 @@ D:\All Coding Stuff\RoR2 Modding\MoreEnemies\obj\Debug\netstandard2.0\MoreMonste
 D:\All Coding Stuff\RoR2 Modding\MoreEnemies\obj\Debug\netstandard2.0\MoreMonsters.csproj.CopyComplete
 D:\All Coding Stuff\RoR2 Modding\MoreEnemies\obj\Debug\netstandard2.0\MoreMonsters.dll
 D:\All Coding Stuff\RoR2 Modding\MoreEnemies\obj\Debug\netstandard2.0\MoreMonsters.pdb
-D:\All Coding Stuff\RoR2 Modding\MoreEnemies\bin\Debug\netstandard2.0\Rewired_Core.dll
-D:\All Coding Stuff\RoR2 Modding\MoreEnemies\bin\Debug\netstandard2.0\Rewired_CSharp.dll
-D:\All Coding Stuff\RoR2 Modding\MoreEnemies\obj\Debug\netstandard2.0\MoreMonsters.csprojAssemblyReference.cache

@@ -45,11 +45,13 @@ namespace MoreMonsters
     {
         public override string displayName => "Imp Sorcerer";
         public override string nameTag => "ImpSorcerer";
-        public override Type[] skillStates => new Type[]
+        public override Type[] entityStates => new Type[]
         {
             typeof(FireVoidCluster),
-            typeof(SorcererBlinkState),
-            typeof(EyeAttackState)
+            typeof(ImpSorcererBlinkState),
+            typeof(EyeAttackState),
+            typeof(SpawnState),
+            typeof(DeathState)
         };
         public override HullClassification hullSize => HullClassification.Human;
         public override MapNodeGroup.GraphType graphType => MapNodeGroup.GraphType.Air;
@@ -64,7 +66,6 @@ namespace MoreMonsters
         public override bool canBeBoss => false;
         protected override string GetLoreString(string langID = null) => "lol";
 
-        protected private SerializableEntityStateType initialStateType;
         SkillDef skillDefSecondary;
         SkillDef skillDefUtility;
         SkillDef skillDefSpecial;
@@ -99,13 +100,220 @@ namespace MoreMonsters
             c.Emit(OpCodes.Starg, 1);
         }
 
-
         public override void CreatePrefab()
         {
-            bodyPrefab = PrefabAPI.InstantiateClone(Resources.Load<GameObject>("Prefabs/CharacterBodies/ImpBody"), "ImpSorcererBody", true);
+            bodyPrefab = PrefabAPI.InstantiateClone(Resources.Load<GameObject>("Prefabs/CharacterBodies/BellBody"), "ImpSorcererBody", true);
+
+            UnityEngine.Object.DestroyImmediate(bodyPrefab.transform.Find("Model Base/mdlBell").gameObject);
+            var model = Assets.mainAssetBundle.LoadAsset<GameObject>("mdlImpSorcerer");
+            model.transform.SetParent(bodyPrefab.transform.Find("Model Base"), false);
+            model.AddComponent<ChildLocator>();
+
+            #region Component Finding
             var cb = bodyPrefab.GetComponent<CharacterBody>();
+            var healthComponent = bodyPrefab.GetComponent<HealthComponent>();
+            var teamComponent = bodyPrefab.GetComponent<TeamComponent>();
+            var modelLocator = bodyPrefab.GetComponent<ModelLocator>();
+            var inputBank = bodyPrefab.GetComponent<InputBankTest>();
+            var stateMachines = bodyPrefab.GetComponents<EntityStateMachine>();
+            var deathBehaviour = bodyPrefab.GetComponent<CharacterDeathBehavior>();
+            var bodyCollider = bodyPrefab.AddComponent<BoxCollider>();
+            var rigidbody = bodyPrefab.GetComponent<Rigidbody>();
+            var rigidbodyDirection = bodyPrefab.GetComponent<RigidbodyDirection>();
+            var rigidbodyMotor = bodyPrefab.GetComponent<RigidbodyMotor>();
+            var vectorPIDs = bodyPrefab.GetComponents<VectorPID>();
+            var quaternionPID = bodyPrefab.GetComponent<QuaternionPID>();
+            var characterModel = model.AddComponent<CharacterModel>();
+            var aimAnimator = model.AddComponent<AimAnimator>();
+            var aimAssist = model.transform.Find("AimAssist").gameObject.AddComponent<AimAssistTarget>();
+            var hurtBoxGroup = model.AddComponent<HurtBoxGroup>();
+            var collisionDisable = bodyPrefab.AddComponent<DisableCollisionsBetweenColliders>();
+            #endregion
+            #region CharacterBody
             cb.baseNameToken = "IMPSORCERER_BODY_NAME";
-            cb.baseJumpCount = 0;
+            cb.bodyFlags = CharacterBody.BodyFlags.IgnoreFallDamage;
+            cb.rootMotionInMainState = false;
+            cb.baseMaxHealth = 250f;
+            cb.baseMoveSpeed = 10f;
+            cb.baseArmor = 5f;
+            cb.sprintingSpeedMultiplier = 1.4f;
+            cb.autoCalculateLevelStats = true;
+            cb.levelMaxHealth = 60f;
+            cb.levelDamage = 2;
+            cb.aimOriginTransform = model.transform.Find("ImpSorcererArmature/ROOT/ROOTBone/Spine1/Spine2/AimOrigin");
+            cb.hullClassification = HullClassification.Human;
+            cb.portraitIcon = null;
+            cb.isChampion = false;
+            cb.preferredInitialStateType = new SerializableEntityStateType(typeof(SpawnState));
+            #endregion
+
+            #region ModelLocator
+            modelLocator.modelTransform = model.transform;
+            modelLocator.dontDetatchFromParent = true;
+            modelLocator.dontReleaseModelOnDeath = false;
+            modelLocator.noCorpse = true;
+            modelLocator.autoUpdateModelTransform = true;
+            #endregion
+
+            #region EntityStates/Death Behavior
+            deathBehaviour.deathState = new SerializableEntityStateType(typeof(DeathState));
+            #endregion
+
+            #region Body Collider  
+            UnityEngine.Object.Destroy(bodyPrefab.GetComponent<CapsuleCollider>());
+            bodyCollider.center = new Vector3(-0.05f, -0.35f, -0.15f);
+            bodyCollider.size = new Vector3(1.55f, 3.5f, 1f);
+            #endregion
+
+            #region Rigidbody/Direction/Motor
+            rigidbody.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+            //rigidbody.constraints = RigidbodyConstraints.FreezeAll;
+            rigidbody.centerOfMass = Vector3.zero;
+
+            rigidbodyDirection.animatorTorqueScale = 1f;
+            rigidbodyDirection.animatorZCycle = "aimPitchCycle";
+            rigidbodyDirection.animatorYCycle = "aimYawCycle";
+            //rigidbodyDirection.freezeZRotation = false;
+            #endregion
+
+            #region PIDs
+            quaternionPID.gain = 2f;
+            foreach (VectorPID vectorPID in vectorPIDs)
+            {
+                if (vectorPID.customName == "torquePID")
+                    vectorPID.gain = 2f;
+                else
+                    vectorPID.PID = new Vector3(2f, 0f);
+            }
+            #endregion
+
+            #region CharacterModel
+            characterModel = ComponentCopier.GetCopyOf(characterModel, Resources.Load<GameObject>("Prefabs/CharacterBodies/ImpBossBody").transform.Find("ModelBase/mdlImpBoss").GetComponent<CharacterModel>());
+            characterModel.body = cb;
+            foreach (CharacterModel.RendererInfo rendererInfo in characterModel.baseRendererInfos)
+            {
+                MoreMonsters._logger.LogWarning("renderer " + rendererInfo.renderer.name);
+                MoreMonsters._logger.LogWarning("material " + rendererInfo.defaultMaterial.name);
+                MoreMonsters._logger.LogWarning("shader " + rendererInfo.defaultMaterial.shader.name);
+            }
+
+            #endregion
+
+            #region AimAnimator
+            aimAnimator.inputBank = inputBank;
+            aimAnimator.pitchRangeMin = -33f;
+            aimAnimator.pitchRangeMax = 33f;
+            aimAnimator.yawRangeMin = -45f;
+            aimAnimator.yawRangeMax = 45f;
+            aimAnimator.pitchGiveupRange = 70f;
+            aimAnimator.yawGiveupRange = 100f;
+            aimAnimator.giveupDuration = 4f;
+            aimAnimator.raisedApproachSpeed = 720f;
+            aimAnimator.loweredApproachSpeed = 360f;
+            #endregion
+
+            #region AimAssist
+            aimAssist = ComponentCopier.GetCopyOf(aimAssist, Resources.Load<GameObject>("Prefabs/CharacterBodies/BellBody").transform.Find("Model Base/mdlBell/GameObject").GetComponent<AimAssistTarget>());
+            aimAssist.point0 = model.transform.Find("Base");
+            aimAssist.point1 = model.transform.Find("Chest");
+            aimAssist.healthComponent = healthComponent;
+            aimAssist.teamComponent = teamComponent;
+            #endregion
+
+            #region HurtBoxes
+            var hurtBoxColliders = new List<Collider>();
+            hurtBoxGroup.bullseyeCount = 1;
+            short index = 0;
+
+            //The great big HurtBox adding machine, just a really abstracted way of adding hurtboxes to bones.
+            for (int i = 1; i <= 2; i++)
+            {
+                string path = "ImpSorcererArmature/ROOT/ROOTBone/Pelvis";
+                int iterations = 2;
+                if (i == 2)
+                {
+                    path = "ImpSorcererArmature/ROOT/ROOTBone/Spine1";
+                    iterations = 3;
+                }
+
+                var hurtBox0 = model.transform.Find(path + "/HurtBox").gameObject.AddComponent<HurtBox>();
+                hurtBox0.healthComponent = healthComponent;
+                hurtBox0.isBullseye = false;
+                hurtBox0.damageModifier = HurtBox.DamageModifier.Normal;
+                hurtBox0.hurtBoxGroup = hurtBoxGroup;
+                hurtBox0.indexInGroup = index;
+                hurtBoxColliders.Add(hurtBox0.GetComponent<Collider>());
+                index++;
+
+
+                if (i == 2)
+                {
+                    path += "/Spine2";
+                    var hurtBoxSpine2 = model.transform.Find(path + "/HurtBox").gameObject.AddComponent<HurtBox>();
+                    hurtBoxSpine2.healthComponent = healthComponent;
+                    hurtBoxSpine2.isBullseye = true;
+                    hurtBoxSpine2.damageModifier = HurtBox.DamageModifier.Normal;
+                    hurtBoxSpine2.hurtBoxGroup = hurtBoxGroup;
+                    hurtBoxSpine2.indexInGroup = index;
+                    hurtBoxGroup.mainHurtBox = hurtBoxSpine2;
+                    hurtBoxColliders.Add(hurtBoxSpine2.GetComponent<Collider>());
+                    index++;
+
+
+                }
+
+                for (int k = 1; k <= iterations; k++)
+                {
+                    string path1 = path;
+                    int iterations1;
+
+                    if (i == 1)
+                    {
+                        if (k == 1)
+                            path1 += "/UpperLeg.L/LowerLeg.L";
+                        else
+                            path1 += "/UpperLeg.R/LowerLeg.R";
+                        iterations1 = 2;
+                    }
+                    else
+                    {
+                        iterations1 = 3;
+                        if (k == 1)
+                            path1 += "/Shoulder.L/UpperArm.L/LowerArm.L/Hand.L";
+                        else
+                        if (k == 2)
+                            path1 += "/Shoulder.R/UpperArm.R/LowerArm.R/Hand.R";
+                        else
+                        {
+                            path1 += "/Neck/Head/Tentacle1/Tentacle2/Tentacle3/Tentacle4/Tentacle5/Tentacle6/Tentacle7/Tentacle8/Tentacle9/Tentacle10/Tentacle11/Tentacle12";
+                            iterations1 = 13;
+                        }
+
+                    }
+
+                    for (int l = iterations1; l > 0; l--)
+                    {
+                        var hurtBox = model.transform.Find(path1 + "/HurtBox").gameObject.AddComponent<HurtBox>();
+                        hurtBox.healthComponent = healthComponent;
+                        hurtBox.isBullseye = false;
+                        hurtBox.damageModifier = HurtBox.DamageModifier.Normal;
+                        hurtBox.hurtBoxGroup = hurtBoxGroup;
+                        hurtBox.indexInGroup = (short)(index + l);
+                        hurtBoxColliders.Add(hurtBox.GetComponent<Collider>());
+                        path1.Remove(path.LastIndexOf('/'));
+                    }
+                    index = (short)(index + iterations1);
+                }
+            }
+            #endregion
+
+            #region Collision Disabling
+            //collision disabling between intersecting colliders
+            collisionDisable.collidersA = new Collider[] { bodyCollider };
+            collisionDisable.collidersB = hurtBoxColliders.ToArray();
+            #endregion
+                
+
 
             #region Potential Garbage
             /*var fly = bodyPrefab.AddComponent<EntityStateMachine>();
@@ -189,21 +397,8 @@ namespace MoreMonsters
             //var stateMachines = bodyPrefab.GetComponents<EntityStateMachine>();
             #endregion
 
-            //GameObject model = CreateModel(bodyPrefab);
-            AddCrystals();
+            //AddCrystals();
             AddProjectiles();
-            //All the other shit that needs to go here
-
-        }
-        public override void SkillSetup()
-        {
-            foreach (GenericSkill obj in bodyPrefab.GetComponentsInChildren<GenericSkill>())
-            {
-                BaseUnityPlugin.DestroyImmediate(obj);
-            }
-            SecondarySetup();
-            UtilitySetup();
-            SpecialSetup();
         }
         public override void CreateMaster()
         {
@@ -267,15 +462,8 @@ namespace MoreMonsters
             voidCluster.buttonPressType = AISkillDriver.ButtonPressType.Hold;
             #endregion
         }
-        private void SecondarySetup()
+        public override void SecondarySetup()
         {
-            SkillLocator component = bodyPrefab.GetComponent<SkillLocator>();
-
-            LanguageAPI.Add("IMPSORCERER_SECONDARY_VOIDCLUSTER_NAME", "Void Cluster");
-            LanguageAPI.Add("IMPSORCERER_SECONDARY_VOIDCLUSTER_DESCRIPTION", "");
-
-            // set up your secondary skill def here!
-
             skillDefSecondary = ScriptableObject.CreateInstance<SkillDef>();
             skillDefSecondary.activationState = new SerializableEntityStateType(typeof(FireVoidCluster));
             skillDefSecondary.activationStateMachineName = "Weapon";
@@ -297,35 +485,12 @@ namespace MoreMonsters
             skillDefSecondary.skillDescriptionToken = "IMPSORCERER_SECONDARY_VOIDCLUSTER_DESCRIPTION";
             skillDefSecondary.skillName = "IMPSORCERER_SECONDARY_VOIDCLUSTER_NAME";
             skillDefSecondary.skillNameToken = "IMPSORCERER_SECONDARY_VOIDCLUSTER_NAME";
-
-            LoadoutAPI.AddSkillDef(skillDefSecondary);
-
-            component.secondary = bodyPrefab.AddComponent<GenericSkill>();
-            SkillFamily newFamily = ScriptableObject.CreateInstance<SkillFamily>();
-            newFamily.variants = new SkillFamily.Variant[1];
-            LoadoutAPI.AddSkillFamily(newFamily);
-            component.secondary.SetFieldValue("_skillFamily", newFamily);
-            SkillFamily skillFamily = component.secondary.skillFamily;
-
-            skillFamily.variants[0] = new SkillFamily.Variant
-            {
-                skillDef = skillDefSecondary,
-                unlockableName = "",
-                viewableNode = new ViewablesCatalog.Node(skillDefSecondary.skillNameToken, false, null)
-            };
-
+            skillDefs[1, 0] = skillDefSecondary;
         }
-        private void UtilitySetup()
+        public override void UtilitySetup()
         {
-            SkillLocator component = bodyPrefab.GetComponent<SkillLocator>();
-
-            LanguageAPI.Add("IMPSORCERER_UTILITY_BLINK_NAME", "Blink");
-            LanguageAPI.Add("IMPSORCERER_UTILITY_BLINK_DESCRIPTION", "");
-
-            // set up your utility skill def here!
-
             skillDefUtility = ScriptableObject.CreateInstance<SkillDef>();
-            skillDefUtility.activationState = new SerializableEntityStateType(typeof(SorcererBlinkState));
+            skillDefUtility.activationState = new SerializableEntityStateType(typeof(ImpSorcererBlinkState));
             skillDefUtility.activationStateMachineName = "Body";
             skillDefUtility.baseMaxStock = 1;
             skillDefUtility.baseRechargeInterval = 15f;
@@ -345,32 +510,10 @@ namespace MoreMonsters
             skillDefUtility.skillDescriptionToken = "IMPSORCERER_UTILITY_BLINK_DESCRIPTION";
             skillDefUtility.skillName = "IMPSORCERER_UTILITY_BLINK_NAME";
             skillDefUtility.skillNameToken = "IMPSORCERER_UTILITY_BLINK_NAME";
-
-            LoadoutAPI.AddSkillDef(skillDefUtility);
-
-            component.utility = bodyPrefab.AddComponent<GenericSkill>();
-            SkillFamily newFamily = ScriptableObject.CreateInstance<SkillFamily>();
-            newFamily.variants = new SkillFamily.Variant[1];
-            LoadoutAPI.AddSkillFamily(newFamily);
-            component.utility.SetFieldValue("_skillFamily", newFamily);
-            SkillFamily skillFamily = component.utility.skillFamily;
-
-            skillFamily.variants[0] = new SkillFamily.Variant
-            {
-                skillDef = skillDefUtility,
-                unlockableName = "",
-                viewableNode = new ViewablesCatalog.Node(skillDefUtility.skillNameToken, false, null)
-            };
+            skillDefs[2, 0] = skillDefUtility;
         }
-        private void SpecialSetup()
+        public override void SpecialSetup()
         {
-            SkillLocator component = bodyPrefab.GetComponent<SkillLocator>();
-
-            LanguageAPI.Add("IMPSORCERER_SPECIAL_EYEATTACK_NAME", "");
-            LanguageAPI.Add("IMPSORCERER_SPECIAL_EYEATTACK_DESCRIPTION", "");
-
-            // set up your special skill def here!
-
             skillDefSpecial = ScriptableObject.CreateInstance<SkillDef>();
             skillDefSpecial.activationState = new SerializableEntityStateType(typeof(EyeAttackState));
             skillDefSpecial.activationStateMachineName = "Weapon";
@@ -392,22 +535,7 @@ namespace MoreMonsters
             skillDefSpecial.skillDescriptionToken = "IMPSORCERER_SPECIAL_EYEATTACK_DESCRIPTION";
             skillDefSpecial.skillName = "IMPSORCERER_SPECIAL_EYEATTACK_NAME";
             skillDefSpecial.skillNameToken = "IMPSORCERER_SPECIAL_EYEATTACK_NAME";
-
-            LoadoutAPI.AddSkillDef(skillDefSpecial);
-
-            component.special = bodyPrefab.AddComponent<GenericSkill>();
-            SkillFamily newFamily = ScriptableObject.CreateInstance<SkillFamily>();
-            newFamily.variants = new SkillFamily.Variant[1];
-            LoadoutAPI.AddSkillFamily(newFamily);
-            component.special.SetFieldValue("_skillFamily", newFamily);
-            SkillFamily skillFamily = component.special.skillFamily;
-
-            skillFamily.variants[0] = new SkillFamily.Variant
-            {
-                skillDef = skillDefSpecial,
-                unlockableName = "",
-                viewableNode = new ViewablesCatalog.Node(skillDefSpecial.skillNameToken, false, null)
-            };
+            skillDefs[3, 0] = skillDefSpecial;
         }
         private void AddCrystals()
         {
@@ -1267,11 +1395,128 @@ namespace MoreMonsters.States.ImpSorcererStates
      * Layer 9: Blink, Additive
      */
 
-    public class FireVoidCluster : BaseState
+    public class SpawnState : BaseState
+    {
+        public static float duration = 3f;
+        public static string spawnSoundString;
+        public static GameObject spawnEffectPrefab;
+        private float stopwatch;
+        public override void OnEnter()
+        {
+            OnEnter();
+            PlayAnimation("Body", "Spawn", "Spawn.playbackRate", duration);
+            //Util.PlaySound(SpawnState.spawnSoundString, gameObject);
+            //if (spawnEffectPrefab)
+            //EffectManager.SimpleMuzzleFlash(spawnEffectPrefab, gameObject, "Base", false);
+        }
+
+        public override void FixedUpdate()
+        {
+            FixedUpdate();
+            stopwatch += Time.fixedDeltaTime;
+            if (stopwatch >= duration && isAuthority)
+            {
+                outer.SetNextStateToMain();
+                return;
+            }
+        }
+
+        public override InterruptPriority GetMinimumInterruptPriority()
+        {
+            return InterruptPriority.Death;
+        }
+    }
+    public class DeathState : GenericCharacterDeath
+    {
+        public static GameObject initialEffect;
+        public static GameObject deathEffect;
+        private static float duration = 3.3166666f;
+        private float stopwatch;
+        private Animator animator;
+        private bool hasPlayedDeathEffect;
+        private bool attemptedDeathBehavior;
+        public override void OnEnter()
+        {
+            OnEnter();
+            animator = GetModelAnimator();
+            if (characterMotor)
+            {
+                characterMotor.enabled = false;
+            }
+            if (modelLocator)
+            {
+                Transform modelTransform = modelLocator.modelTransform;
+                ChildLocator component = modelTransform.GetComponent<ChildLocator>();
+                CharacterModel component2 = modelTransform.GetComponent<CharacterModel>();
+                if (component)
+                {
+                    component.FindChild("DustCenter").gameObject.SetActive(false);
+                    if (initialEffect)
+                    {
+                        EffectManager.SimpleMuzzleFlash(initialEffect, gameObject, "DeathCenter", false);
+                    }
+                }
+                if (component2)
+                {
+                    for (int i = 0; i < component2.baseRendererInfos.Length; i++)
+                    {
+                        component2.baseRendererInfos[i].ignoreOverlays = true;
+                    }
+                }
+            }
+            PlayAnimation("Body", "Death");
+        }
+
+        public override void FixedUpdate()
+        {
+            if (animator)
+            {
+                stopwatch += Time.fixedDeltaTime;
+                if (!hasPlayedDeathEffect && animator.GetFloat("DeathEffect") > 0.5f)
+                {
+                    hasPlayedDeathEffect = true;
+                    EffectManager.SimpleMuzzleFlash(deathEffect, gameObject, "DeathCenter", false);
+                }
+                if (stopwatch >= duration)
+                {
+                    AttemptDeathBehavior();
+                }
+            }
+        }
+
+        private void AttemptDeathBehavior()
+        {
+            if (attemptedDeathBehavior)
+            {
+                return;
+            }
+            attemptedDeathBehavior = true;
+            if (modelLocator.modelBaseTransform)
+            {
+                EntityState.Destroy(modelLocator.modelBaseTransform.gameObject);
+            }
+            if (NetworkServer.active)
+            {
+                EntityState.Destroy(gameObject);
+            }
+        }
+
+        public override void OnExit()
+        {
+            if (!outer.destroying)
+            {
+                AttemptDeathBehavior();
+            }
+            OnExit();
+        }
+
+    }
+
+    public class FireVoidCluster : BaseSkillState
     {
         public static GameObject projectilePrefab;
         public static GameObject effectPrefab;
-        public static float baseDuration = 3.5f;
+        public static float baseDuration = 3f;
         public static float damageCoefficient = 4f;
         public static float procCoefficient;
         public static float selfForce;
@@ -1283,51 +1528,44 @@ namespace MoreMonsters.States.ImpSorcererStates
         public static float walkSpeedPenaltyCoefficient;
         private Animator modelAnimator;
         private float duration;
-        private int slashCount;
-        private Transform modelTransform;
+        private Ray aimRay;
 
 
         public override void OnEnter()
         {
-            base.OnEnter();
+            OnEnter();
+            activatorSkillSlot = skillLocator.secondary;
             duration = baseDuration / attackSpeedStat;
-            modelAnimator = base.GetModelAnimator();
-            modelTransform = base.GetModelTransform();
-            Ray aimRay = base.GetAimRay();
-            base.StartAimMode(aimRay, 2f, false);
-            base.characterMotor.walkSpeedPenaltyCoefficient = walkSpeedPenaltyCoefficient;
-            //Util.PlayScaledSound(enterSoundString, base.gameObject, attackSpeedStat);
+            modelAnimator = GetModelAnimator();
+            rigidbodyMotor.enabled = false;
+            //Util.PlayScaledSound(enterSoundString, gameObject, attackSpeedStat);
+
             if (modelAnimator)
             {
-                base.PlayAnimation("Gesture, Additive", "DoubleSlash", "DoubleSlash.playbackRate", duration);
-                base.PlayAnimation("Gesture, Override", "DoubleSlash", "DoubleSlash.playbackRate", duration);
-            }
-            if (base.isAuthority)
-            {
-                ProjectileManager.instance.FireProjectile(projectilePrefab, aimRay.origin, Util.QuaternionSafeLookRotation(aimRay.direction), base.gameObject, this.damageStat * damageCoefficient, 0f, Util.CheckRoll(this.critStat, base.characterBody.master), DamageColorIndex.Default, null, -1f);
-            }
-            if (base.characterBody)
-            {
-                base.characterMotor.walkSpeedPenaltyCoefficient = 1f;
-                base.characterBody.SetAimTimer(this.duration + 2f);
+                PlayAnimation("Body", "Secondary", "Secondary.playbackRate", duration);
             }
         }
         public override void OnExit()
         {
-            base.OnExit();
+            aimRay = GetAimRay();
+            ProjectileManager.instance.FireProjectile(projectilePrefab, aimRay.direction, Util.QuaternionSafeLookRotation(aimRay.direction), gameObject, damageStat * damageCoefficient, 0f, Util.CheckRoll(critStat, characterBody.master), DamageColorIndex.Default, null, -1f);
+            if (characterBody)
+                characterBody.SetAimTimer(2f);
+            rigidbodyMotor.enabled = true;
+            OnExit();
         }
 
         public override void FixedUpdate()
         {
-            base.FixedUpdate();
-            if (base.fixedAge >= duration && base.isAuthority)
+            FixedUpdate();
+            if (fixedAge >= duration && isAuthority)
             {
-                this.outer.SetNextStateToMain();
+                outer.SetNextStateToMain();
                 return;
             }
         }
     }
-    public class SorcererBlinkState : BaseState
+    public class ImpSorcererBlinkState : BaseSkillState
     {
         private Transform modelTransform;
         public static GameObject blinkPrefab = Resources.Load<GameObject>("prefabs/effects/ImpBlinkEffect");
@@ -1335,7 +1573,9 @@ namespace MoreMonsters.States.ImpSorcererStates
         private float stopwatch;
         private Vector3 blinkDestination = Vector3.zero;
         private Vector3 blinkStart = Vector3.zero;
-        public static float duration = 0.3f;
+        public static float durationFirstAnim = 1.6167f;
+        public static float duration = 6.66f;
+        public static float waitTime = 1.15f;
         public static float blinkDistance = 40f;
         public static string beginSoundString;
         public static string endSoundString;
@@ -1345,9 +1585,10 @@ namespace MoreMonsters.States.ImpSorcererStates
 
         public override void OnEnter()
         {
-            base.OnEnter();
-            Util.PlaySound(SorcererBlinkState.beginSoundString, base.gameObject);
-            modelTransform = base.GetModelTransform();
+            OnEnter();
+            activatorSkillSlot = skillLocator.utility;
+            Util.PlaySound(beginSoundString, gameObject);
+            modelTransform = GetModelTransform();
             if (modelTransform)
             {
                 animator = modelTransform.GetComponent<Animator>();
@@ -1364,18 +1605,15 @@ namespace MoreMonsters.States.ImpSorcererStates
                 int hurtBoxesDeactivatorCounter = hurtBoxGroup.hurtBoxesDeactivatorCounter + 1;
                 hurtBoxGroup.hurtBoxesDeactivatorCounter = hurtBoxesDeactivatorCounter;
             }
-            if (base.characterMotor)
-            {
-                base.characterMotor.enabled = false;
-            }
-            Vector3 b = base.inputBank.moveVector * SorcererBlinkState.blinkDistance;
-            blinkDestination = base.transform.position;
-            blinkStart = base.transform.position;
-            NodeGraph groundNodes = SceneInfo.instance.airNodes;
-            NodeGraph.NodeIndex nodeIndex = groundNodes.FindClosestNode(base.transform.position + b, base.characterBody.hullClassification);
-            groundNodes.GetNodePosition(nodeIndex, out blinkDestination);
-            blinkDestination += base.transform.position - base.characterBody.footPosition;
-            CreateBlinkEffect(Util.GetCorePosition(base.gameObject));
+            if (rigidbodyMotor)
+                rigidbodyMotor.enabled = false;
+            Vector3 b = inputBank.moveVector * blinkDistance;
+            blinkDestination = transform.position;
+            blinkStart = transform.position;
+            NodeGraph airNodes = SceneInfo.instance.airNodes;
+            NodeGraph.NodeIndex nodeIndex = airNodes.FindClosestNode(transform.position + b, characterBody.hullClassification);
+            airNodes.GetNodePosition(nodeIndex, out blinkDestination);
+            blinkDestination += transform.position - characterBody.footPosition;
         }
 
         private void CreateBlinkEffect(Vector3 origin)
@@ -1383,66 +1621,66 @@ namespace MoreMonsters.States.ImpSorcererStates
             EffectData effectData = new EffectData();
             effectData.rotation = Util.QuaternionSafeLookRotation(blinkDestination - blinkStart);
             effectData.origin = origin;
-            EffectManager.SpawnEffect(SorcererBlinkState.blinkPrefab, effectData, false);
+            EffectManager.SpawnEffect(blinkPrefab, effectData, false);
+            PlayAnimation("Body", "Utility1");
         }
 
         private void SetPosition(Vector3 newPosition)
         {
-            if (base.characterMotor)
-            {
-                base.characterMotor.Motor.SetPositionAndRotation(newPosition, Quaternion.identity, true);
-            }
+            transform.position = newPosition;
         }
 
         public override void FixedUpdate()
         {
-            base.FixedUpdate();
+            FixedUpdate();
             stopwatch += Time.fixedDeltaTime;
-            if (base.characterMotor && base.characterDirection)
-            {
-                base.characterMotor.velocity = Vector3.zero;
-            }
-            SetPosition(Vector3.Lerp(blinkStart, blinkDestination, stopwatch / SorcererBlinkState.duration));
-            if (stopwatch >= SorcererBlinkState.duration && base.isAuthority)
+            SetPosition(Vector3.Lerp(blinkStart, blinkDestination, stopwatch / duration));
+            if (fixedAge >= duration)
             {
                 outer.SetNextStateToMain();
+                return;
+            }
+            else
+            {
+                if (fixedAge >= waitTime + durationFirstAnim)
+                    CreateBlinkEffect(blinkDestination);
+                else
+                {
+                    if (fixedAge >= duration - waitTime && isAuthority)
+                    {
+
+                        Util.PlaySound(endSoundString, gameObject);
+                        CreateBlinkEffect(Util.GetCorePosition(gameObject));
+                        modelTransform = GetModelTransform();
+                        if (modelTransform && destealthMaterial)
+                        {
+                            TemporaryOverlay temporaryOverlay = animator.gameObject.AddComponent<TemporaryOverlay>();
+                            temporaryOverlay.duration = 1f;
+                            temporaryOverlay.destroyComponentOnEnd = true;
+                            temporaryOverlay.originalMaterial = destealthMaterial;
+                            temporaryOverlay.inspectorCharacterModel = animator.gameObject.GetComponent<CharacterModel>();
+                            temporaryOverlay.alphaCurve = AnimationCurve.EaseInOut(0f, 1f, 1f, 0f);
+                            temporaryOverlay.animateShaderAlpha = true;
+                        }
+                        if (characterModel)
+                            characterModel.invisibilityCount--;
+                        if (hurtboxGroup)
+                        {
+                            HurtBoxGroup hurtBoxGroup = hurtboxGroup;
+                            int hurtBoxesDeactivatorCounter = hurtBoxGroup.hurtBoxesDeactivatorCounter - 1;
+                            hurtBoxGroup.hurtBoxesDeactivatorCounter = hurtBoxesDeactivatorCounter;
+                        }
+                    }
+                }
             }
         }
 
         public override void OnExit()
         {
-            Util.PlaySound(SorcererBlinkState.endSoundString, base.gameObject);
-            CreateBlinkEffect(Util.GetCorePosition(base.gameObject));
-            modelTransform = base.GetModelTransform();
-            if (modelTransform && SorcererBlinkState.destealthMaterial)
-            {
-                TemporaryOverlay temporaryOverlay = animator.gameObject.AddComponent<TemporaryOverlay>();
-                temporaryOverlay.duration = 1f;
-                temporaryOverlay.destroyComponentOnEnd = true;
-                temporaryOverlay.originalMaterial = SorcererBlinkState.destealthMaterial;
-                temporaryOverlay.inspectorCharacterModel = animator.gameObject.GetComponent<CharacterModel>();
-                temporaryOverlay.alphaCurve = AnimationCurve.EaseInOut(0f, 1f, 1f, 0f);
-                temporaryOverlay.animateShaderAlpha = true;
-            }
-            if (characterModel)
-            {
-                characterModel.invisibilityCount--;
-            }
-            if (hurtboxGroup)
-            {
-                HurtBoxGroup hurtBoxGroup = hurtboxGroup;
-                int hurtBoxesDeactivatorCounter = hurtBoxGroup.hurtBoxesDeactivatorCounter - 1;
-                hurtBoxGroup.hurtBoxesDeactivatorCounter = hurtBoxesDeactivatorCounter;
-            }
-            if (base.characterMotor)
-            {
-                base.characterMotor.enabled = true;
-            }
-            base.PlayAnimation("Gesture, Additive", "BlinkEnd");
-            base.OnExit();
+            OnExit();
         }
     }
-    public class EyeAttackState : BaseState
+    public class EyeAttackState : BaseSkillState
     {
         public static GameObject projectilePrefab;
         public static GameObject effectPrefab;
@@ -1458,26 +1696,25 @@ namespace MoreMonsters.States.ImpSorcererStates
         public static float walkSpeedPenaltyCoefficient;
         private Animator modelAnimator;
         private float duration;
-        private int slashCount;
         private Transform modelTransform;
 
 
         public override void OnEnter()
         {
-            base.OnEnter();
+            OnEnter();
             duration = baseDuration / attackSpeedStat;
-            modelAnimator = base.GetModelAnimator();
-            modelTransform = base.GetModelTransform();
-            Ray aimRay = base.GetAimRay();
-            base.StartAimMode(aimRay, 2f, false);
-            base.characterMotor.walkSpeedPenaltyCoefficient = walkSpeedPenaltyCoefficient;
-            //Util.PlayScaledSound(enterSoundString, base.gameObject, attackSpeedStat);
+            modelAnimator = GetModelAnimator();
+            modelTransform = GetModelTransform();
+            Ray aimRay = GetAimRay();
+            StartAimMode(aimRay, 2f, false);
+            characterMotor.walkSpeedPenaltyCoefficient = walkSpeedPenaltyCoefficient;
+            //Util.PlayScaledSound(enterSoundString, gameObject, attackSpeedStat);
             if (modelAnimator)
             {
-                base.PlayAnimation("Gesture, Additive", "DoubleSlash", "DoubleSlash.playbackRate", duration);
-                base.PlayAnimation("Gesture, Override", "DoubleSlash", "DoubleSlash.playbackRate", duration);
+                PlayAnimation("Gesture, Additive", "DoubleSlash", "DoubleSlash.playbackRate", duration);
+                PlayAnimation("Gesture, Override", "DoubleSlash", "DoubleSlash.playbackRate", duration);
             }
-            if (base.isAuthority)
+            if (isAuthority)
             {
                 BullseyeSearch bullseyeSearch = new BullseyeSearch();
                 bullseyeSearch.teamMaskFilter = TeamMask.allButNeutral;
@@ -1498,23 +1735,23 @@ namespace MoreMonsters.States.ImpSorcererStates
                     gameObject.GetComponent<ImpSorcererCrystalController>().SetTarget(hurtBox.healthComponent.body.gameObject, attackSpeedStat, duration, damageStat * damageCoefficient);
                 }
             }
-            if (base.characterBody)
+            if (characterBody)
             {
-                base.characterMotor.walkSpeedPenaltyCoefficient = 1f;
-                base.characterBody.SetAimTimer(this.duration + 2f);
+                characterMotor.walkSpeedPenaltyCoefficient = 1f;
+                characterBody.SetAimTimer(duration + 2f);
             }
         }
         public override void OnExit()
         {
-            base.OnExit();
+            OnExit();
         }
 
         public override void FixedUpdate()
         {
-            base.FixedUpdate();
-            if (base.fixedAge >= duration && base.isAuthority)
+            FixedUpdate();
+            if (fixedAge >= duration && isAuthority)
             {
-                this.outer.SetNextStateToMain();
+                outer.SetNextStateToMain();
                 return;
             }
         }

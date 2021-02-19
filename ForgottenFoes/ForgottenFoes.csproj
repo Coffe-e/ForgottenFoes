@@ -1,0 +1,111 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>ForgottenFoes</AssemblyName>
+    <RootNamespace>ForgottenFoes</RootNamespace>
+    <Configurations>Debug;Release</Configurations>
+    <OutputType>Library</OutputType>
+    <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Include="forgottenfoes_assets" />
+	</ItemGroup>
+	
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>..\libs\Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="BepInEx">
+      <HintPath>..\libs\BepInEx.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="MMHOOK_Assembly-CSharp">
+      <HintPath>..\libs\MMHOOK_Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Mono.Cecil">
+      <HintPath>..\libs\Mono.Cecil.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="MonoMod.Utils">
+      <HintPath>..\libs\MonoMod.Utils.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="R2API">
+      <HintPath>..\libs\R2API.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Rewired_Core">
+      <HintPath>..\libs\Rewired_Core.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Rewired_CSharp">
+      <HintPath>..\libs\Rewired_CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="ShareSuite">
+      <HintPath>..\libs\ShareSuite.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="TILER2">
+      <HintPath>..\libs\TILER2.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Unity.Postprocessing.Runtime">
+      <HintPath>..\libs\Unity.Postprocessing.Runtime.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Unity.TextMeshPro">
+      <HintPath>..\libs\Unity.TextMeshPro.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>..\libs\UnityEngine.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.AnimationModule">
+      <HintPath>..\libs\UnityEngine.AnimationModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.AssetBundleModule">
+      <HintPath>..\libs\UnityEngine.AssetBundleModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>..\libs\UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.Networking">
+      <HintPath>..\libs\UnityEngine.Networking.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.ParticleSystemModule">
+      <HintPath>..\libs\UnityEngine.ParticleSystemModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.PhysicsModule">
+      <HintPath>..\libs\UnityEngine.PhysicsModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>..\libs\UnityEngine.UI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="xcopy &quot;$(TargetPath)&quot; &quot;$(SolutionDir)NetworkWeaver\Patched\&quot; /Y&#xD;&#xA;cd &quot;$(SolutionDir)NetworkWeaver&quot;&#xD;&#xA;Unity.UNetWeaver.exe &quot;..\libs\UnityEngine.CoreModule.dll&quot; &quot;..\libs\UnityEngine.Networking.dll&quot; &quot;\Patched&quot; &quot;Patched\$(TargetFileName)&quot; &quot;$(SolutionDir)libs&quot;&#xD;&#xA;&#xD;&#xA;copy &quot;$(SolutionDir)NetworkWeaver\Patched\$(TargetFileName)&quot; &quot;C:\Users\arant\AppData\Roaming\r2modmanPlus-local\RiskOfRain2\profiles\Testing\BepInEx\plugins\$(TargetName)\$(TargetFileName)&quot; /Y&#xD;&#xA;copy &quot;$(SolutionDir)NetworkWeaver\Patched\$(TargetFileName)&quot; &quot;$(SolutionDir)ModMeta&quot; /Y&#xD;&#xA;&#xD;&#xA;cd &quot;$(SolutionDir)ModMeta&quot;&#xD;&#xA;copy * &quot;$(SolutionDir)TempDoNotDelete&quot; /Y&#xD;&#xA;&#xD;&#xA;xcopy &quot;C:\Program Files\7-Zip\7z.exe&quot; &quot;$(SolutionDir)&quot; /Y&#xD;&#xA;&#xD;&#xA;cd &quot;$(SolutionDir)&quot;&#xD;&#xA;mkdir Builds&#xD;&#xA;if $(ConfigurationName) == Debug (&#xD;&#xA;7z.exe a &quot;$(SolutionDir)TempDoNotDelete\Debug.zip&quot; &quot;$(SolutionDir)TempDoNotDelete\*&quot;&#xD;&#xA;xcopy &quot;$(SolutionDir)TempDoNotDelete\Debug.zip&quot; &quot;Builds&quot; /y&#xD;&#xA;) ELSE (&#xD;&#xA;7z.exe a Temp\Release.zip .\Temp\*&#xD;&#xA;xcopy &quot;$(SolutionDir)TempDoNotDelete\Release.zip&quot; &quot;Builds&quot; /y&#xD;&#xA;)&#xD;&#xA;&#xD;&#xA;del TempDoNotDelete /q&#xD;&#xA;del &quot;$(SolutionDir)7z.exe&quot; /q&#xD;&#xA;del &quot;$(SolutionDir)NetworkWeaver\Patched\$(TargetFileName)&quot; /q&#xD;&#xA;del &quot;$(SolutionDir)ModMeta\$(TargetFileName)&quot; /q" />
+  </Target>
+
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <Exec Command="xcopy &quot;$(SolutionDir)\Unity Project\AssetBundles\StandaloneWindows64\forgottenfoes_assets&quot; &quot;$(SolutionDir)&quot; /Y" />
+  </Target>
+
+</Project>

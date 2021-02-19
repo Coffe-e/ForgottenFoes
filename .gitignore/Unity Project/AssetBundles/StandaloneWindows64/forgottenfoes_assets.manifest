@@ -1,0 +1,82 @@
+ManifestFileVersion: 0
+CRC: 718575906
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 9d6adb0f99d644ab8a59f1645aa2b615
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: c474e342498482210c3b5cb414322a8c
+HashAppended: 0
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 23
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 33
+  Script: {instanceID: 0}
+- Class: 43
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 65
+  Script: {instanceID: 0}
+- Class: 74
+  Script: {instanceID: 0}
+- Class: 90
+  Script: {instanceID: 0}
+- Class: 91
+  Script: {instanceID: 0}
+- Class: 95
+  Script: {instanceID: 0}
+- Class: 114
+  Script: {fileID: 372142912, guid: dc443db3e92b4983b9738c1131f555cb, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+- Class: 136
+  Script: {instanceID: 0}
+- Class: 137
+  Script: {instanceID: 0}
+- Class: 1818360609
+  Script: {instanceID: 0}
+Assets:
+- Assets/ForgottenFoesAssetBundle/ImpSorcerer/prefabs/ImpSorcererHalo.prefab
+- Assets/ForgottenFoesAssetBundle/ImpSorcerer/animations/ImpSorcererUtility1.anim
+- Assets/ForgottenFoesAssetBundle/ImpSorcerer/meshes/ImpSorcererMesh.mesh
+- Assets/ForgottenFoesAssetBundle/ImpSorcerer/prefabs/CrystalFollower.prefab
+- Assets/ForgottenFoesAssetBundle/ImpSorcerer/animations/ImpSorcererAvatar.asset
+- Assets/ForgottenFoesAssetBundle/ImpSorcerer/textures/texGlowFlowerDiffuse.jpeg
+- Assets/ForgottenFoesAssetBundle/ImpSorcerer/meshes/Cone.mesh
+- Assets/ForgottenFoesAssetBundle/ImpSorcerer/meshes/CrystalMesh.mesh
+- Assets/ForgottenFoesAssetBundle/BellBoss/meshes/LowerBellHurtBoxMesh.fbx
+- Assets/ForgottenFoesAssetBundle/ImpSorcerer/meshes/ImpSorcererPortal.mesh
+- Assets/ForgottenFoesAssetBundle/ImpSorcerer/animations/ImpSorcererAimPitch.anim
+- Assets/ForgottenFoesAssetBundle/ImpSorcerer/materials/matImpSorcerer.mat
+- Assets/ForgottenFoesAssetBundle/ImpSorcerer/textures/texImpSorcerer.png
+- Assets/ForgottenFoesAssetBundle/ImpSorcerer/animations/ImpSorcererSpecial1.anim
+- Assets/ForgottenFoesAssetBundle/ImpSorcerer/animations/ImpSorcererFlinch.anim
+- Assets/ForgottenFoesAssetBundle/ImpSorcerer/animations/ImpSorcererSpecial3.anim
+- Assets/ForgottenFoesAssetBundle/ImpSorcerer/animations/ImpSorcererDeath.anim
+- Assets/ForgottenFoesAssetBundle/ImpSorcerer/animations/ImpSorcererSpawn.anim
+- Assets/ForgottenFoesAssetBundle/ImpSorcerer/textures/texCloudOrganic2.png
+- Assets/ForgottenFoesAssetBundle/ImpSorcerer/materials/matIndicator.mat
+- Assets/ForgottenFoesAssetBundle/ImpSorcerer/materials/matGlowFlower.mat
+- Assets/ForgottenFoesAssetBundle/ImpSorcerer/prefabs/mdlImpSorcerer.prefab
+- Assets/ForgottenFoesAssetBundle/ImpSorcerer/animations/animImpSorcerer.controller
+- Assets/ForgottenFoesAssetBundle/ImpSorcerer/animations/ImpSorcererSpecial2.anim
+- Assets/ForgottenFoesAssetBundle/ImpSorcerer/animations/ImpSorcererStun2.anim
+- Assets/ForgottenFoesAssetBundle/ImpSorcerer/animations/ImpSorcererAimYaw.anim
+- Assets/ForgottenFoesAssetBundle/ImpSorcerer/animations/ImpSorcererStun1.anim
+- Assets/ForgottenFoesAssetBundle/ImpSorcerer/animations/ImpSorcererUtility2.anim
+- Assets/ForgottenFoesAssetBundle/ImpSorcerer/animations/ImpSorcererTaunt.anim
+- Assets/ForgottenFoesAssetBundle/ImpSorcerer/animations/ImpSorcererIdle.anim
+- Assets/ForgottenFoesAssetBundle/ImpSorcerer/animations/ImpSorcererStun3.anim
+- Assets/ForgottenFoesAssetBundle/ImpSorcerer/animations/ImpSorcererSecondary.anim
+- Assets/ForgottenFoesAssetBundle/ImpSorcerer/meshes/GlowFlowerMesh.mesh
+Dependencies: []

@@ -477,11 +477,6 @@ namespace WonderWorld.ForgottenFoes
 
             //var stateMachines = bodyPrefab.GetComponents<EntityStateMachine>();
             #endregion
-            LoadoutAPI.AddSkill(typeof(SpawnState));
-            LoadoutAPI.AddSkill(typeof(DeathState));
-            LoadoutAPI.AddSkill(typeof(FireVoidCluster));
-            LoadoutAPI.AddSkill(typeof(ImpSorcererBlinkState));
-            LoadoutAPI.AddSkill(typeof(EyeAttackState));
             //AddCrystals();
             AddProjectiles();
         }

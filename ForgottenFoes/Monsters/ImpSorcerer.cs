@@ -47,11 +47,11 @@ namespace WonderWorld.ForgottenFoes
         public override string nameTag => "ImpSorcerer";
         public override Type[] entityStates => new Type[]
         {
+            typeof(SpawnState),
+            typeof(DeathState),
             typeof(FireVoidCluster),
             typeof(ImpSorcererBlinkState),
             typeof(EyeAttackState),
-            typeof(SpawnState),
-            typeof(DeathState)
         };
         public override HullClassification hullSize => HullClassification.Human;
         public override MapNodeGroup.GraphType graphType => MapNodeGroup.GraphType.Air;
@@ -148,7 +148,7 @@ namespace WonderWorld.ForgottenFoes
             cb.hullClassification = HullClassification.Human;
             cb.portraitIcon = null;
             cb.isChampion = false;
-            cb.preferredInitialStateType = new SerializableEntityStateType(typeof(SpawnState));
+            cb.preferredInitialStateType = LoadoutAPI.StateTypeOf<SpawnState>();
             #endregion
 
             #region ModelLocator
@@ -159,7 +159,17 @@ namespace WonderWorld.ForgottenFoes
             #endregion
 
             #region EntityStates/Death Behavior
-            deathBehavior.deathState = new SerializableEntityStateType(typeof(DeathState));
+            foreach (EntityStateMachine stateMachine in stateMachines)
+                UnityEngine.Object.Destroy(stateMachine);
+            stateMachines[0] = bodyPrefab.AddComponent<EntityStateMachine>();
+            stateMachines[0].initialStateType = LoadoutAPI.StateTypeOf<SpawnState>();
+            stateMachines[0].mainStateType = LoadoutAPI.StateTypeOf<FlyState>();
+            stateMachines[1] = bodyPrefab.AddComponent<EntityStateMachine>();
+            stateMachines[1].initialStateType = LoadoutAPI.StateTypeOf<Idle>();
+            stateMachines[1].mainStateType = LoadoutAPI.StateTypeOf<Idle>();
+
+            networkMachine.stateMachines = stateMachines;
+            deathBehavior.deathState = LoadoutAPI.StateTypeOf<DeathState>();
             deathBehavior.deathStateMachine = EntityStateMachine.FindByCustomName(bodyPrefab, "Body");
             deathBehavior.idleStateMachine = new EntityStateMachine[] { EntityStateMachine.FindByCustomName(bodyPrefab, "Weapon") };
             #endregion
@@ -467,7 +477,11 @@ namespace WonderWorld.ForgottenFoes
 
             //var stateMachines = bodyPrefab.GetComponents<EntityStateMachine>();
             #endregion
-
+            LoadoutAPI.AddSkill(typeof(SpawnState));
+            LoadoutAPI.AddSkill(typeof(DeathState));
+            LoadoutAPI.AddSkill(typeof(FireVoidCluster));
+            LoadoutAPI.AddSkill(typeof(ImpSorcererBlinkState));
+            LoadoutAPI.AddSkill(typeof(EyeAttackState));
             //AddCrystals();
             AddProjectiles();
         }
@@ -535,8 +549,9 @@ namespace WonderWorld.ForgottenFoes
         }
         public override void SecondarySetup()
         {
+            base.SecondarySetup();
             skillDefSecondary = ScriptableObject.CreateInstance<SkillDef>();
-            skillDefSecondary.activationState = new SerializableEntityStateType(typeof(FireVoidCluster));
+            skillDefSecondary.activationState = new SerializableEntityStateType(entityStates[0]);
             skillDefSecondary.activationStateMachineName = "Body";
             skillDefSecondary.baseMaxStock = 100;
             skillDefSecondary.baseRechargeInterval = 10f;
@@ -560,6 +575,7 @@ namespace WonderWorld.ForgottenFoes
         }
         public override void UtilitySetup()
         {
+            base.UtilitySetup();
             skillDefUtility = ScriptableObject.CreateInstance<SkillDef>();
             skillDefUtility.activationState = new SerializableEntityStateType(typeof(ImpSorcererBlinkState));
             skillDefUtility.activationStateMachineName = "Body";
@@ -585,6 +601,7 @@ namespace WonderWorld.ForgottenFoes
         }
         public override void SpecialSetup()
         {
+            base.SpecialSetup();
             skillDefSpecial = ScriptableObject.CreateInstance<SkillDef>();
             skillDefSpecial.activationState = new SerializableEntityStateType(typeof(EyeAttackState));
             skillDefSpecial.activationStateMachineName = "Body";

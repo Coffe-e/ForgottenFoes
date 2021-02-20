@@ -13,6 +13,10 @@ using TILER2;
 using UnityEngine;
 using static TILER2.MiscUtil;
 using Path = System.IO.Path;
+using System.Security;
+using System.Security.Permissions;
+[module: UnverifiableCode]
+[assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
 
 /* TO DO:
  * Add Logbook support

@@ -147,8 +147,6 @@ namespace WonderWorld.ForgottenFoes.Utils
             loreToken = $"{modInfo.longIdentifier}_{name.ToUpper()}_LORE";
 
             CreatePrefab();
-            RegisterSkills();
-            CreateMaster();
 
             //adds the bodyPrefab and masterPrefab to the entry list
             BodyCatalog.getAdditionalEntries += delegate (List<GameObject> list)
@@ -159,6 +157,10 @@ namespace WonderWorld.ForgottenFoes.Utils
             {
                 list.Add(masterPrefab);
             };
+
+            RegisterSkills();
+            CreateMaster();
+
 
             //Makes a SpawnCard for the enemy
             CharacterSpawnCard spawnCard1 = ScriptableObject.CreateInstance<CharacterSpawnCard>();

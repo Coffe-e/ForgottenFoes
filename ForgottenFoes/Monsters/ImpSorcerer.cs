@@ -1,97 +1,104 @@
-﻿using BepInEx;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.InteropServices;
+using BepInEx.Configuration;
+using EnigmaticThunder.Modules;
+using EnigmaticThunder.Util;
 using EntityStates;
-using KinematicCharacterController;
-using Mono.Cecil;
+using EntityStates.ForgottenFoes.ImpSorcererStates;
+using ForgottenFoes.Enemies;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
-using WonderWorld.ForgottenFoes;
-using EntityStates.ForgottenFoes.ImpSorcererStates;
-using WonderWorld.ForgottenFoes.Utils;
 using R2API;
-using R2API.Utils;
 using RoR2;
 using RoR2.CharacterAI;
 using RoR2.Navigation;
 using RoR2.Projectile;
 using RoR2.Skills;
-using RoR2.WwiseUtils;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Text;
-using TILER2;
 using UnityEngine;
 using UnityEngine.Animations;
-using UnityEngine.Events;
 using UnityEngine.Networking;
-using UnityEngine.Serialization;
-using R2API.Networking;
-using static TILER2.MiscUtil;
-using System.Collections;
-using RoR2.Orbs;
-using Rewired.ComponentControls.Effects;
 
-
-/* To-Do List:
- * Note: The Fly State is broken as shit right now due to not having viable animation layers. Come back to it when actual characters are ready to be implemented.
- * Implement model whenever that's possible
- */
-namespace WonderWorld.ForgottenFoes
+namespace ForgottenFoes.Enemies
 {
-    public class ImpSorcerer : MonsterBoilerplate
+    class ImpSorcerer : EnemyBuilderNew
     {
-        public override string displayName => "Imp Sorcerer";
-        public override string nameTag => "ImpSorcerer";
-        public override Type[] entityStates => new Type[]
-        {
-            typeof(SpawnState),
-            typeof(DeathState),
-            typeof(FireVoidCluster),
-            typeof(ImpSorcererBlinkState),
-            typeof(EyeAttackState),
-        };
-        public override HullClassification hullSize => HullClassification.Human;
-        public override MapNodeGroup.GraphType graphType => MapNodeGroup.GraphType.Air;
-        public override int creditCost => 27;
-        public override bool occupyPosition => true;
-        public override int selectionWeight => 1;
-        public override DirectorCore.MonsterSpawnDistance spawnDistance => DirectorCore.MonsterSpawnDistance.Far;
-        public override bool ambush => true;
-        public override int minimumStage => 5;
-        public override DirectorAPI.Stage[] homeStages => new DirectorAPI.Stage[] { DirectorAPI.Stage.ScorchedAcres, DirectorAPI.Stage.RallypointDelta, DirectorAPI.Stage.AbyssalDepths };
-        public override DirectorAPI.MonsterCategory monsterCategory => DirectorAPI.MonsterCategory.BasicMonsters;
-        public override bool canBeBoss => false;
-        protected override string GetLoreString(string langID = null) => "lol";
+        public override int DirectorCost => 27;
 
-        SkillDef skillDefSecondary;
-        SkillDef skillDefUtility;
-        SkillDef skillDefSpecial;
-        GameObject projectilePrefab;
-        GameObject spikePrefab;
+        public override bool NoElites => false;
+
+        public override bool ForbiddenAsBoss => false;
+
+        public override HullClassification HullClassification => HullClassification.Human;
+
+        public override MapNodeGroup.GraphType GraphType => MapNodeGroup.GraphType.Air;
+
+        public override int SelectionWeight => 1;
+
+        public override DirectorCore.MonsterSpawnDistance SpawnDistance => DirectorCore.MonsterSpawnDistance.Far;
+
+        public override bool AmbushSpawn => true;
+
+        public override DirectorAPI.Stage[] StagesToSpawnOn => new DirectorAPI.Stage[] { DirectorAPI.Stage.ScorchedAcres, DirectorAPI.Stage.RallypointDelta, DirectorAPI.Stage.AbyssalDepths };
+
+        public override DirectorAPI.MonsterCategory MonsterCategory => DirectorAPI.MonsterCategory.BasicMonsters;
+
+        public override string MonsterName => "Imp Cunt";
+
+        protected override string bodyName => "ImpSorcerer";
+
         public static string deleteWhenYouGetModel = "ModelBase/mdlImp";
 
-        public override void Install()
-        {
-            base.Install();
+        public GameObject projectilePrefab;
+        public GameObject spikePrefab;
 
-            IL.RoR2.Projectile.ProjectileImpactExplosion.FireChild += IL_ProjectileImpactChildFix;
-        }
-        public override void Uninstall()
+        public override void BuildCharacterbody(CharacterBody body)
         {
-            base.Uninstall();
-
-            IL.RoR2.Projectile.ProjectileImpactExplosion.FireChild -= IL_ProjectileImpactChildFix;
+            base.BuildCharacterbody(body);
         }
+
+        public override void BuildConfig(ConfigFile config)
+        {
+            base.BuildConfig(config);
+        }
+
+        public override void BuildMasterAI()
+        {
+            base.BuildMasterAI();
+        }
+
+        public override void BuildModel()
+        {
+            base.BuildModel();
+        }
+
+        public override void Hook()
+        {
+            base.Hook();
+            //i have no idea what happened here
+            //you're on your own
+            //just found out 
+
+
+            //THIS SHIT DOESN'T FUCKING WORK
+            //IL.RoR2.Projectile.ProjectileExplosion.FireChild += IL_ProjectileImpactChildFix;
+           
+            
+            
+            //IL.RoR2.Projectile.ProjectileImpactExplosion.FireChild += IL_ProjectileImpactChildFix;
+
+        }
+
+        //nice summary, bro.
         ///<summary>Because the FireChild stuff was designed in a completely **FUCKING STUPID** WAY AND TAKES THE Z OFFETS FOR BOTH Y AND Z OF THE VECTOR... This injects some code to make it take the y offset</summary>
         private void IL_ProjectileImpactChildFix(ILContext il)
         {
+            //
             ILCursor c = new ILCursor(il);
             c.Emit(OpCodes.Ldarg_0);
             c.Emit(OpCodes.Ldarg_1);
-            c.EmitDelegate<Func<ProjectileImpactExplosion, Vector3, Vector3>>((self, vector) =>
+            c.EmitDelegate<Func<ProjectileExplosion, Vector3, Vector3>>((self, vector) =>
             {
                 if (self.gameObject)
                     return new Vector3(vector.x, -1f, vector.z);
@@ -100,7 +107,10 @@ namespace WonderWorld.ForgottenFoes
             c.Emit(OpCodes.Starg, 1);
         }
 
-        public override void CreatePrefab()
+        //I FUCKING HATE CHICAGO
+        //FUCK YOU CHICAGO
+
+        public override void BuildPrefabs()
         {
             bodyPrefab = PrefabAPI.InstantiateClone(Resources.Load<GameObject>("Prefabs/CharacterBodies/BellBody"), "ImpSorcererBody", true);
 
@@ -148,7 +158,7 @@ namespace WonderWorld.ForgottenFoes
             cb.hullClassification = HullClassification.Human;
             cb.portraitIcon = null;
             cb.isChampion = false;
-            cb.preferredInitialStateType = LoadoutAPI.StateTypeOf<SpawnState>();
+            cb.preferredInitialStateType = new SerializableEntityStateType(typeof(SpawnState));
             #endregion
 
             #region ModelLocator
@@ -158,7 +168,9 @@ namespace WonderWorld.ForgottenFoes
             modelLocator.autoUpdateModelTransform = true;
             #endregion
 
-            #region EntityStates/Death Behavior
+            //why?
+            //jfc
+            /*#region EntityStates/Death Behavior
             foreach (EntityStateMachine stateMachine in stateMachines)
                 UnityEngine.Object.Destroy(stateMachine);
             stateMachines[0] = bodyPrefab.AddComponent<EntityStateMachine>();
@@ -172,7 +184,7 @@ namespace WonderWorld.ForgottenFoes
             deathBehavior.deathState = LoadoutAPI.StateTypeOf<DeathState>();
             deathBehavior.deathStateMachine = EntityStateMachine.FindByCustomName(bodyPrefab, "Body");
             deathBehavior.idleStateMachine = new EntityStateMachine[] { EntityStateMachine.FindByCustomName(bodyPrefab, "Weapon") };
-            #endregion
+            #endregion*/
 
             #region Body Collider  
             UnityEngine.Object.Destroy(bodyPrefab.GetComponent<CapsuleCollider>());
@@ -210,18 +222,20 @@ namespace WonderWorld.ForgottenFoes
 
 
             var impBossMeshRenderer = Resources.Load<GameObject>("Prefabs/CharacterBodies/ImpBossBody").transform.Find("ModelBase/mdlImpBoss/ImpBossMesh").GetComponent<SkinnedMeshRenderer>();
-            ForgottenFoes._logger.LogWarning("renderer " + impBossMeshRenderer.name);
-            ForgottenFoes._logger.LogWarning("material " + impBossMeshRenderer.material.name);
-            ForgottenFoes._logger.LogWarning("shader " + impBossMeshRenderer.material.shader.name);
-            ForgottenFoes._logger.LogWarning("EmTex " + impBossMeshRenderer.material.GetTexture("_EmTex").name);
-            ForgottenFoes._logger.LogWarning("FlowHeightRamp " + impBossMeshRenderer.material.GetTexture("_FlowHeightRamp").name);
-            ForgottenFoes._logger.LogWarning("FlowHeightmap " + impBossMeshRenderer.material.GetTexture("_FlowHeightmap").name);
-            ForgottenFoes._logger.LogWarning("FlowTex " + impBossMeshRenderer.material.GetTexture("_FlowTex").name);
-            ForgottenFoes._logger.LogWarning("FresnelRamp " + impBossMeshRenderer.material.GetTexture("_FresnelRamp").name);
-            ForgottenFoes._logger.LogWarning("MainTex " + impBossMeshRenderer.material.GetTexture("_MainTex").name);
-            ForgottenFoes._logger.LogWarning("NormalTex " + impBossMeshRenderer.material.GetTexture("_NormalTex").name);
-            ForgottenFoes._logger.LogWarning("PrintRamp " + impBossMeshRenderer.material.GetTexture("_PrintRamp").name);
-            ForgottenFoes._logger.LogWarning("SliceAlphaTex " + impBossMeshRenderer.material.GetTexture("_SliceAlphaTex").name);
+
+            //ok then.
+            LogCore.LogW("renderer " + impBossMeshRenderer.name);
+            LogCore.LogW("material " + impBossMeshRenderer.material.name);
+            LogCore.LogW("shader " + impBossMeshRenderer.material.shader.name);
+            LogCore.LogW("EmTex " + impBossMeshRenderer.material.GetTexture("_EmTex").name);
+            LogCore.LogW("FlowHeightRamp " + impBossMeshRenderer.material.GetTexture("_FlowHeightRamp").name);
+            LogCore.LogW("FlowHeightmap " + impBossMeshRenderer.material.GetTexture("_FlowHeightmap").name);
+            LogCore.LogW("FlowTex " + impBossMeshRenderer.material.GetTexture("_FlowTex").name);
+            LogCore.LogW("FresnelRamp " + impBossMeshRenderer.material.GetTexture("_FresnelRamp").name);
+            LogCore.LogW("MainTex " + impBossMeshRenderer.material.GetTexture("_MainTex").name);
+            LogCore.LogW("NormalTex " + impBossMeshRenderer.material.GetTexture("_NormalTex").name);
+            LogCore.LogW("PrintRamp " + impBossMeshRenderer.material.GetTexture("_PrintRamp").name);
+            LogCore.LogW("SliceAlphaTex " + impBossMeshRenderer.material.GetTexture("_SliceAlphaTex").name);
             #endregion
 
             #region PrintController
@@ -393,100 +407,20 @@ namespace WonderWorld.ForgottenFoes
             collisionDisable.collidersA = new Collider[] { bodyCollider };
             collisionDisable.collidersB = hurtBoxColliders.ToArray();
             #endregion
-
-
-
-            #region Potential Garbage
-            /*var fly = bodyPrefab.AddComponent<EntityStateMachine>();
-            fly.customName = "Flight";
-            fly.initialStateType = new SerializableEntityStateType(typeof(GenericCharacterMain));
-            fly.mainStateType = new SerializableEntityStateType(typeof(GenericCharacterMain));*/
-
-
-            /*var wispPrefab = Resources.Load<GameObject>("Prefabs/CharacterBodies/WispBody");
-
-            //Grabs the EntityStateMachine That needs to be manipulated
-            List<EntityStateMachine> bodyEntityStateMachines = new List<EntityStateMachine>();
-            bodyPrefab.GetComponents<EntityStateMachine>(bodyEntityStateMachines);
-            if (bodyEntityStateMachines[0].customName != "Body")
-                bodyEntityStateMachines.RemoveAt(0);
-
-            //Grabs the wisp EntityStateMachine the prefab one is being replaced with
-            List<EntityStateMachine> wispEntityStateMachines = new List<EntityStateMachine>();
-            wispPrefab.GetComponents<EntityStateMachine>(wispEntityStateMachines);
-            if (wispEntityStateMachines[0].customName != "Body")
-                wispEntityStateMachines.RemoveAt(0);
-
-            bodyEntityStateMachines[0].mainStateType = wispEntityStateMachines[0].mainStateType;
-
-            _______________________________________________________________________________*/
-
-            /*bodyPrefab = PrefabAPI.InstantiateClone(Resources.Load<GameObject>("Prefabs/CharacterBodies/BellBody"), "ImpSorcererBody");
-            var impPrefab = PrefabAPI.InstantiateClone(Resources.Load<GameObject>("Prefabs/CharacterBodies/ImpBody"), "ImpSorcererImpAssets");
-
-            List<EntityStateMachine> bodyEntityStateMachines = new List<EntityStateMachine>();
-            List<EntityStateMachine> impEntityStateMachines = new List<EntityStateMachine>();
-
-            //Replaces the modelbase for the bell with the imp one and adds other imp gameobjects
-            UnityEngine.Object.Destroy(bodyPrefab.transform.Find("mdlBell").gameObject);
-            impPrefab.transform.Find("mdlImp").SetParent(bodyPrefab.transform.Find("ModelBase"));
-            impPrefab.transform.Find("CameraPivot").SetParent(bodyPrefab.transform);
-            impPrefab.transform.Find("AimOrigin").SetParent(bodyPrefab.transform);
-
-            bodyPrefab.GetComponents<EntityStateMachine>(bodyEntityStateMachines);
-            impPrefab.GetComponents<EntityStateMachine>(impEntityStateMachines);
-            if(bodyEntityStateMachines[0].customName == "Body")
-            {
-                bodyEntityStateMachines[0].initialStateType = impEntityStateMachines[0].initialStateType;
-                bodyEntityStateMachines[1] = impEntityStateMachines[1];
-            }
-
-            UnityEngine.Object.Destroy(bodyPrefab.GetComponent<RigidbodyDirection>());
-            UnityEngine.Object.Destroy(bodyPrefab.GetComponent<RigidbodyMotor>());
-            var cpt0 = bodyPrefab.AddComponent<CharacterDirection>();
-            var cpt1 = bodyPrefab.AddComponent<CharacterMotor>();
-            var cpt2 = bodyPrefab.AddComponent<KinematicCharacterMotor>();
-            var cpt3 = bodyPrefab.GetComponent<CharacterBody>();
-            var cpt4 = bodyPrefab.GetComponent<CharacterDeathBehavior>();
-
-            cpt0 = impPrefab.GetComponent<CharacterDirection>();
-            cpt1 = impPrefab.GetComponent<CharacterMotor>();
-            cpt1.airControl = 1;
-            cpt1.isFlying = true;
-            cpt1.characterDirection = cpt0;k
-            cpt1.characterDirection = cpt0;k
-            cpt2 = impPrefab.GetComponent<KinematicCharacterMotor>();
-            cpt3 = impPrefab.GetComponent<CharacterBody>();
-            cpt1.body = cpt3;
-            cpt3.baseNameToken = "IMPSORCERER_BODY_NAME";
-            cpt4 = impPrefab.GetComponent<CharacterDeathBehavior>();*/
-
-
-            /*//Removes the BellArmature and replaces it with the Imp Armature
-            UnityEngine.Object.Destroy(bodyPrefab.transform.Find("BellArmature").gameObject);
-            impPrefab.transform.Find("ImpArmature").SetParent(bodyPrefab.transform.Find("mdlBell"));
-            //Removes the BellMesh and replaces it with the Imp Mesh
-            UnityEngine.Object.Destroy(bodyPrefab.transform.Find("BellMesh").gameObject);
-            impPrefab.transform.Find("ImpMesh").SetParent(bodyPrefab.transform.Find("mdlBell"));
-            //removes the aim assist from the bell and adds the imp one
-            UnityEngine.Object.Destroy(bodyPrefab.transform.Find("GameObject").gameObject);
-            impPrefab.transform.Find("AimAssist").SetParent(bodyPrefab.transform.Find("mdlBell"));*/
-
-
-
-
-            //var stateMachines = bodyPrefab.GetComponents<EntityStateMachine>();
-            #endregion
-            //AddCrystals();
-            AddProjectiles();
+            CloudUtils.RegisterNewBody(bodyPrefab);
+            BuildMaster();
         }
-        public override void CreateMaster()
+
+
+        //https://cdn.discordapp.com/attachments/785698006212804619/806241149412835338/Screenshot_20210202-121414_Discord.jpg
+        private void BuildMaster()
         {
             masterPrefab = PrefabAPI.InstantiateClone(Resources.Load<GameObject>("Prefabs/CharacterMasters/ImpMaster"), "ImpSorcererMaster");
             CharacterMaster cm = masterPrefab.GetComponent<CharacterMaster>();
             cm.bodyPrefab = bodyPrefab;
             var baseAI = masterPrefab.GetComponent<BaseAI>();
-            baseAI.minDistanceFromEnemy = 50f;
+            //this field doesn't exist anymore
+            //baseAI.minDistanceFromEnemy = 50f;
             baseAI.stateMachine = masterPrefab.GetComponent<EntityStateMachine>();
             baseAI.enemyAttentionDuration = 7f;
 
@@ -497,7 +431,7 @@ namespace WonderWorld.ForgottenFoes
                 {
                     case "BlinkBecauseClose":
                         asd.customName = "BlinkBecauseTooClose";
-                        asd.requiredSkill = skillDefUtility;
+                        //asd.requiredSkill = skillDefUtility;
                         asd.minDistance = 0f;
                         asd.maxDistance = 25f;
                         asd.movementType = AISkillDriver.MovementType.FleeMoveTarget;
@@ -523,7 +457,7 @@ namespace WonderWorld.ForgottenFoes
             #region VoidCluster
             AISkillDriver voidCluster = masterPrefab.AddComponent<AISkillDriver>();
             voidCluster.skillSlot = SkillSlot.Secondary;
-            voidCluster.requiredSkill = skillDefSecondary;
+            //voidCluster.requiredSkill = skillDefSecondary;
             voidCluster.requireSkillReady = false;
             voidCluster.requireEquipmentReady = false;
             voidCluster.moveTargetType = AISkillDriver.TargetType.CurrentEnemy;
@@ -541,147 +475,8 @@ namespace WonderWorld.ForgottenFoes
             voidCluster.shouldTapButton = false;
             voidCluster.buttonPressType = AISkillDriver.ButtonPressType.Hold;
             #endregion
-        }
-        public override void SecondarySetup()
-        {
-            base.SecondarySetup();
-            skillDefSecondary = ScriptableObject.CreateInstance<SkillDef>();
-            skillDefSecondary.activationState = new SerializableEntityStateType(entityStates[0]);
-            skillDefSecondary.activationStateMachineName = "Body";
-            skillDefSecondary.baseMaxStock = 100;
-            skillDefSecondary.baseRechargeInterval = 10f;
-            skillDefSecondary.beginSkillCooldownOnSkillEnd = true;
-            skillDefSecondary.canceledFromSprinting = false;
-            skillDefSecondary.fullRestockOnAssign = true;
-            skillDefSecondary.interruptPriority = InterruptPriority.Frozen;
-            skillDefSecondary.isBullets = false;
-            skillDefSecondary.isCombatSkill = true;
-            skillDefSecondary.mustKeyPress = true;
-            skillDefSecondary.noSprint = true;
-            skillDefSecondary.rechargeStock = 1;
-            skillDefSecondary.requiredStock = 1;
-            skillDefSecondary.shootDelay = 0f;
-            skillDefSecondary.stockToConsume = 1;
-            skillDefSecondary.icon = null;
-            skillDefSecondary.skillDescriptionToken = "IMPSORCERER_SECONDARY_VOIDCLUSTER_DESCRIPTION";
-            skillDefSecondary.skillName = "IMPSORCERER_SECONDARY_VOIDCLUSTER_NAME";
-            skillDefSecondary.skillNameToken = "IMPSORCERER_SECONDARY_VOIDCLUSTER_NAME";
-            skillDefs[1, 0] = skillDefSecondary;
-        }
-        public override void UtilitySetup()
-        {
-            base.UtilitySetup();
-            skillDefUtility = ScriptableObject.CreateInstance<SkillDef>();
-            skillDefUtility.activationState = new SerializableEntityStateType(typeof(ImpSorcererBlinkState));
-            skillDefUtility.activationStateMachineName = "Body";
-            skillDefUtility.baseMaxStock = 1;
-            skillDefUtility.baseRechargeInterval = 15f;
-            skillDefUtility.beginSkillCooldownOnSkillEnd = true;
-            skillDefUtility.canceledFromSprinting = false;
-            skillDefUtility.fullRestockOnAssign = true;
-            skillDefUtility.interruptPriority = InterruptPriority.Frozen;
-            skillDefUtility.isBullets = false;
-            skillDefUtility.isCombatSkill = false;
-            skillDefUtility.mustKeyPress = true;
-            skillDefUtility.noSprint = true;
-            skillDefUtility.rechargeStock = 1;
-            skillDefUtility.requiredStock = 1;
-            skillDefUtility.shootDelay = 0f;
-            skillDefUtility.stockToConsume = 1;
-            skillDefUtility.icon = null;
-            skillDefUtility.skillDescriptionToken = "IMPSORCERER_UTILITY_BLINK_DESCRIPTION";
-            skillDefUtility.skillName = "IMPSORCERER_UTILITY_BLINK_NAME";
-            skillDefUtility.skillNameToken = "IMPSORCERER_UTILITY_BLINK_NAME";
-            skillDefs[2, 0] = skillDefUtility;
-        }
-        public override void SpecialSetup()
-        {
-            base.SpecialSetup();
-            skillDefSpecial = ScriptableObject.CreateInstance<SkillDef>();
-            skillDefSpecial.activationState = new SerializableEntityStateType(typeof(EyeAttackState));
-            skillDefSpecial.activationStateMachineName = "Body";
-            skillDefSpecial.baseMaxStock = 100;
-            skillDefSpecial.baseRechargeInterval = 10f;
-            skillDefSpecial.beginSkillCooldownOnSkillEnd = true;
-            skillDefSpecial.canceledFromSprinting = false;
-            skillDefSpecial.fullRestockOnAssign = true;
-            skillDefSpecial.interruptPriority = InterruptPriority.Frozen;
-            skillDefSpecial.isBullets = false;
-            skillDefSpecial.isCombatSkill = true;
-            skillDefSpecial.mustKeyPress = true;
-            skillDefSpecial.noSprint = true;
-            skillDefSpecial.rechargeStock = 1;
-            skillDefSpecial.requiredStock = 1;
-            skillDefSpecial.shootDelay = 0f;
-            skillDefSpecial.stockToConsume = 1;
-            skillDefSpecial.icon = null;
-            skillDefSpecial.skillDescriptionToken = "IMPSORCERER_SPECIAL_EYEATTACK_DESCRIPTION";
-            skillDefSpecial.skillName = "IMPSORCERER_SPECIAL_EYEATTACK_NAME";
-            skillDefSpecial.skillNameToken = "IMPSORCERER_SPECIAL_EYEATTACK_NAME";
-            skillDefs[3, 0] = skillDefSpecial;
-        }
-        private void AddCrystals()
-        {
-            #region Stuff to be removed when model exists
-            var crystals = PrefabAPI.InstantiateClone(Assets.mainAssetBundle.LoadAsset<GameObject>("CrystalFollower"), "Crystals", false);
-            crystals.transform.SetParent(bodyPrefab.transform.Find("ModelBase/mdlImp"), false);
-            crystals.transform.localPosition += new Vector3(0f, 1.2f);
-            #endregion
-
-            #region Rotation Constraint
-            //ImpSorcererCrystalController.constraintPrefab = PrefabAPI.InstantiateClone(Assets.mainAssetBundle.LoadAsset<GameObject>("CrystalRotationController"), "ImpSorcererCrystalRotationController", true);
-            #endregion
-
-            #region Attack Crystals added
-            var crystalClones = GameObject.Instantiate(bodyPrefab.transform.Find(deleteWhenYouGetModel + "/Crystals").gameObject); // When model is imported, change mdlImp to mdlImpSorcerer or else there will be a NRE!
-
-            Transform[] offsets = new Transform[] { crystalClones.transform.Find("Offset0"), crystalClones.transform.Find("Offset1"), crystalClones.transform.Find("Offset2") };
-            for (int i = 0; i < offsets.Length; i++)
-            {
-                var diamond = PrefabAPI.InstantiateClone(Resources.Load<GameObject>("prefabs/pickupmodels/PickupDiamond"), "Model", false);
-                diamond.transform.SetParent(offsets[i], false);
-                diamond.transform.localPosition += new Vector3(0, 1);
-                diamond.transform.localScale *= 0.6f;
-                diamond.transform.localRotation = Quaternion.identity;
-                var rigidBody = offsets[i].gameObject.AddComponent<Rigidbody>();
-                rigidBody.interpolation = RigidbodyInterpolation.Interpolate;
-                rigidBody.mass = 30f;
-                rigidBody.drag = 0.3f;
-                rigidBody.angularDrag = 0.2f;
-                rigidBody.maxAngularVelocity = 180f * Mathf.Deg2Rad;
-                rigidBody.isKinematic = true;
-                rigidBody.useGravity = false;
-            }
-
-            var attackManager = crystalClones.AddComponent<ImpSorcererCrystalAttackManager>();
-            attackManager.enabled = false;
-            crystalClones.AddComponent<ImpSorcererCrystalMovementManager>();
-            crystalClones.AddComponent<NetworkIdentity>(); //networkidentity should default to server only(?)
-            crystalClones = PrefabAPI.InstantiateClone(crystalClones, "Attack Crystals", true);
-            ImpSorcererCrystalController.clonePrefab = crystalClones;
-            #endregion
-
-            var crystalController = bodyPrefab.AddComponent<ImpSorcererCrystalController>();
-
-            #region Adding Effects
-            var attackEffect = PrefabAPI.InstantiateClone(Resources.Load<GameObject>("prefabs/effects/ImpDeathEffect"), "ImpSorcererEyeAttackEffect", false);
-
-            attackEffect.GetComponent<EffectComponent>().effectIndex = EffectIndex.Invalid;
-            attackEffect.GetComponent<EffectComponent>().effectData = null;
-            attackEffect.GetComponent<EffectComponent>().applyScale = true;
-            attackEffect.GetComponent<VFXAttributes>().secondaryParticleSystem = null;
-            attackEffect.transform.localScale = new Vector3(0.6f, 0.6f, 0.6f);
-
-            var particleSystems = attackEffect.GetComponentsInChildren<ParticleSystem>();
-            foreach (ParticleSystem particleSystem in particleSystems)
-            {
-                var main = particleSystem.main;
-                main.simulationSpeed = 1.5f;
-            }
-            EffectAPI.AddEffect(attackEffect);
-            ImpSorcererCrystalAttackManager.effectPrefab = attackEffect;
-            #endregion
-
+            CloudUtils.RegisterNewMaster(masterPrefab);
+            AddProjectiles();
 
         }
         private void AddProjectiles()
@@ -767,12 +562,146 @@ namespace WonderWorld.ForgottenFoes
             var spikeSimpleComponent = spikePrefab.GetComponent<ProjectileSimple>();
             spikeSimpleComponent.velocity *= 0.75f;
 
-            ProjectileCatalog.getAdditionalEntries += delegate (List<GameObject> list)
-            {
-                list.Add(projectilePrefab);
-                list.Add(spikePrefab);
-            };
+            Projectiles.RegisterProjectile(projectilePrefab);
+            Projectiles.RegisterProjectile(spikePrefab);
+
+
             FireVoidCluster.projectilePrefab = projectilePrefab;
+        }
+
+        public override void CreatePrimary(SkillLocator skillLocator, SkillFamily skillFamily)
+        {
+            base.CreatePrimary(skillLocator, skillFamily);
+            SkillDef def = ScriptableObject.CreateInstance<SkillDef>();
+            def.activationState = new SerializableEntityStateType(typeof(FireVoidCluster));
+            def.activationStateMachineName = "Body";
+            def.baseMaxStock = 100;
+            def.baseRechargeInterval = 10f;
+            def.beginSkillCooldownOnSkillEnd = true;
+            def.canceledFromSprinting = false;
+            def.fullRestockOnAssign = true;
+            def.interruptPriority = InterruptPriority.Skill;
+            def.isCombatSkill = true;
+            def.mustKeyPress = true;
+            def.rechargeStock = 1;
+            def.requiredStock = 1;
+            def.stockToConsume = 1;
+            def.icon = null;
+            def.skillDescriptionToken = "IMPSORCERER_SECONDARY_VOIDCLUSTER_DESCRIPTION";
+            def.skillName = "IMPSORCERER_SECONDARY_VOIDCLUSTER_NAME";
+            def.skillNameToken = "IMPSORCERER_SECONDARY_VOIDCLUSTER_NAME";
+
+            skillFamily.variants[0] = new SkillFamily.Variant
+            {
+                skillDef = def,
+                viewableNode = new ViewablesCatalog.Node(def.skillNameToken, false, null)
+            };
+        }
+
+        public override void CreateSecondary(SkillLocator skillLocator, SkillFamily skillFamily)
+        {
+            base.CreateSecondary(skillLocator, skillFamily);
+
+            Loadouts.RegisterEntityState(typeof(FireVoidCluster));
+
+            SkillDef def = ScriptableObject.CreateInstance<SkillDef>();
+            def.activationState = new SerializableEntityStateType(typeof(FireVoidCluster));
+            def.activationStateMachineName = "Body";
+            def.baseMaxStock = 100;
+            def.baseRechargeInterval = 1f;
+            def.beginSkillCooldownOnSkillEnd = true;
+            def.canceledFromSprinting = false;
+            def.fullRestockOnAssign = true;
+            def.interruptPriority = InterruptPriority.Skill;
+            def.isCombatSkill = true;
+            def.mustKeyPress = true;
+            def.rechargeStock = 1;
+            def.requiredStock = 1;
+            def.stockToConsume = 1;
+            def.icon = null;
+            def.skillDescriptionToken = "IMPSORCERER_SECONDARY_VOIDCLUSTER_DESCRIPTION";
+            def.skillName = "IMPSORCERER_SECONDARY_VOIDCLUSTER_NAME";
+            def.skillNameToken = "IMPSORCERER_SECONDARY_VOIDCLUSTER_NAME";
+
+            Loadouts.RegisterSkillDef(def);
+
+            skillFamily.variants[0] = new SkillFamily.Variant
+            {
+                skillDef = def,
+                viewableNode = new ViewablesCatalog.Node(def.skillNameToken, false, null)
+            };
+        }
+        public override void CreateUtility(SkillLocator skillLocator, SkillFamily skillFamily)
+        {
+            base.CreateUtility(skillLocator, skillFamily);
+            SkillDef def = ScriptableObject.CreateInstance<SkillDef>();
+            def.activationState = new SerializableEntityStateType(typeof(ImpSorcererBlinkState));
+            def.activationStateMachineName = "Body";
+            def.baseMaxStock = 1;
+            def.baseRechargeInterval = 15f;
+            def.beginSkillCooldownOnSkillEnd = true;
+            def.canceledFromSprinting = false;
+            def.fullRestockOnAssign = true;
+            def.interruptPriority = InterruptPriority.Skill;
+            def.isCombatSkill = false;
+            def.mustKeyPress = true;
+            def.rechargeStock = 1;
+            def.requiredStock = 1;
+            def.stockToConsume = 1;
+            def.icon = null;
+            def.skillDescriptionToken = "IMPSORCERER_UTILITY_BLINK_DESCRIPTION";
+            def.skillName = "IMPSORCERER_UTILITY_BLINK_NAME";
+            def.skillNameToken = "IMPSORCERER_UTILITY_BLINK_NAME";
+            skillFamily.variants[0] = new SkillFamily.Variant
+            {
+                skillDef = def,
+                viewableNode = new ViewablesCatalog.Node(def.skillNameToken, false, null)
+            };
+        }
+
+        public override void CreateSpecial(SkillLocator skillLocator, SkillFamily skillFamily)
+        {
+            base.CreateSpecial(skillLocator, skillFamily);
+
+            SkillDef def = ScriptableObject.CreateInstance<SkillDef>();
+            def.activationState = new SerializableEntityStateType(typeof(EyeAttackState));
+            def.activationStateMachineName = "Body";
+            def.baseMaxStock = 100;
+            def.baseRechargeInterval = 10f;
+            def.beginSkillCooldownOnSkillEnd = true;
+            def.canceledFromSprinting = false;
+            def.fullRestockOnAssign = true;
+            def.interruptPriority = InterruptPriority.Skill;
+            def.isCombatSkill = true;
+            def.mustKeyPress = true;
+            def.rechargeStock = 1;
+            def.requiredStock = 1;
+            def.stockToConsume = 1;
+            def.icon = null;
+            def.skillDescriptionToken = "IMPSORCERER_SPECIAL_EYEATTACK_DESCRIPTION";
+            def.skillName = "IMPSORCERER_SPECIAL_EYEATTACK_NAME";
+            def.skillNameToken = "IMPSORCERER_SPECIAL_EYEATTACK_NAME";
+            skillFamily.variants[0] = new SkillFamily.Variant
+            {
+                skillDef = def,
+                viewableNode = new ViewablesCatalog.Node(def.skillNameToken, false, null)
+            };
+        }
+
+
+        public override void ModifyDirectorCard(DirectorCard card)
+        {
+            base.ModifyDirectorCard(card);
+        }
+
+        public override void ModifySpawnCard(CharacterSpawnCard card)
+        {
+            base.ModifySpawnCard(card);
+        }
+
+        public override void OverrideSkills()
+        {
+            base.OverrideSkills();
         }
     }
     public class VoidClusterBombIndicator : MonoBehaviour
@@ -1616,11 +1545,14 @@ namespace EntityStates.ForgottenFoes.ImpSorcererStates
         private float duration;
         private Ray aimRay;
 
+        public override InterruptPriority GetMinimumInterruptPriority()
+        {
+            return InterruptPriority.PrioritySkill;
+        }
 
         public override void OnEnter()
         {
             OnEnter();
-            activatorSkillSlot = skillLocator.secondary;
             duration = baseDuration / attackSpeedStat;
             modelAnimator = GetModelAnimator();
             rigidbodyMotor.enabled = false;
@@ -1672,7 +1604,6 @@ namespace EntityStates.ForgottenFoes.ImpSorcererStates
         public override void OnEnter()
         {
             OnEnter();
-            activatorSkillSlot = skillLocator.utility;
             Util.PlaySound(beginSoundString, gameObject);
             modelTransform = GetModelTransform();
             if (modelTransform)
@@ -1700,6 +1631,10 @@ namespace EntityStates.ForgottenFoes.ImpSorcererStates
             NodeGraph.NodeIndex nodeIndex = airNodes.FindClosestNode(transform.position + b, characterBody.hullClassification);
             airNodes.GetNodePosition(nodeIndex, out blinkDestination);
             blinkDestination += transform.position - characterBody.footPosition;
+        }
+        public override InterruptPriority GetMinimumInterruptPriority()
+        {
+            return InterruptPriority.PrioritySkill;
         }
 
         private void CreateBlinkEffect(Vector3 origin)
@@ -1766,6 +1701,9 @@ namespace EntityStates.ForgottenFoes.ImpSorcererStates
             OnExit();
         }
     }
+
+    //word dissassacion
+
     public class EyeAttackState : BaseSkillState
     {
         public static GameObject projectilePrefab;
@@ -1784,6 +1722,10 @@ namespace EntityStates.ForgottenFoes.ImpSorcererStates
         private float duration;
         private Transform modelTransform;
 
+        public override InterruptPriority GetMinimumInterruptPriority()
+        {
+            return InterruptPriority.PrioritySkill;
+        }
 
         public override void OnEnter()
         {

@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\kurog\\Source\\Repos\\ForgottenFoes\\ForgottenFoes\\ForgottenFoes.csproj": {}
+    "C:\\Users\\kurog\\source\\repos\\ForgottenFoes\\ForgottenFoes\\ForgottenFoes.csproj": {}
   },
   "projects": {
-    "C:\\Users\\kurog\\Source\\Repos\\ForgottenFoes\\ForgottenFoes\\ForgottenFoes.csproj": {
+    "C:\\Users\\kurog\\source\\repos\\ForgottenFoes\\ForgottenFoes\\ForgottenFoes.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\kurog\\Source\\Repos\\ForgottenFoes\\ForgottenFoes\\ForgottenFoes.csproj",
+        "projectUniqueName": "C:\\Users\\kurog\\source\\repos\\ForgottenFoes\\ForgottenFoes\\ForgottenFoes.csproj",
         "projectName": "ForgottenFoes",
-        "projectPath": "C:\\Users\\kurog\\Source\\Repos\\ForgottenFoes\\ForgottenFoes\\ForgottenFoes.csproj",
+        "projectPath": "C:\\Users\\kurog\\source\\repos\\ForgottenFoes\\ForgottenFoes\\ForgottenFoes.csproj",
         "packagesPath": "C:\\Users\\kurog\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\kurog\\Source\\Repos\\ForgottenFoes\\ForgottenFoes\\obj\\",
+        "outputPath": "C:\\Users\\kurog\\source\\repos\\ForgottenFoes\\ForgottenFoes\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
